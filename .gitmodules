@@ -1,0 +1,69 @@
+[submodule "roles/basic_host"]
+	path = roles/basic_host
+	url = https://github.com/AndresBott/ansible-role-basic-host.git
+[submodule "roles/fail2ban"]
+	path = roles/fail2ban
+	url = https://github.com/AndresBott/ansible-role-fail2ban.git
+[submodule "roles/monit"]
+	path = roles/monit
+	url = https://github.com/AndresBott/ansible-role-monit.git
+[submodule "roles/nodejs"]
+	path = roles/nodejs
+	url = https://github.com/AndresBott/ansible-role-nodejs.git
+[submodule "roles/nginx"]
+	path = roles/nginx
+	url = https://github.com/AndresBott/ansible-role-nginx.git
+[submodule "roles/validation"]
+	path = roles/validation
+	url = https://github.com/AndresBott/ansible-role-validation.git
+[submodule "roles/php-fpm"]
+	path = roles/php-fpm
+	url = https://github.com/AndresBott/ansible-role-php-fpm.git
+[submodule "roles/composer"]
+	path = roles/composer
+	url = https://github.com/AndresBott/ansible-role-composer.git
+[submodule "roles/mysql"]
+	path = roles/mysql
+	url = https://github.com/AndresBott/ansible-role-mysql.git
+[submodule "roles/letsencrypt"]
+	path = roles/letsencrypt
+	url = https://github.com/AndresBott/ansible-role-letsencrypt.git
+[submodule "roles/webservices"]
+	path = roles/webservices
+	url = https://github.com/AndresBott/ansible-role-webservices.git
+[submodule "roles/pybackup"]
+	path = roles/pybackup
+	url = https://github.com/AndresBott/ansible-role-pybackup.git
+[submodule "roles/gitea"]
+	path = roles/gitea
+	url = https://github.com/AndresBott/ansible-role-gitea.git
+[submodule "roles/mediawiki"]
+	path = roles/mediawiki
+	url = https://github.com/AndresBott/ansible-role-mediawiki.git
+[submodule "roles/parsoid"]
+	path = roles/parsoid
+	url = https://github.com/AndresBott/ansible-role-parsoid.git
+[submodule "roles/node-red"]
+	path = roles/node-red
+	url = https://github.com/AndresBott/ansible-role-node-red.git
+[submodule "roles/radicale"]
+	path = roles/radicale
+	url = https://github.com/AndresBott/ansible-role-radicale.git
+[submodule "roles/roundcube"]
+	path = roles/roundcube
+	url = https://github.com/AndresBott/ansible-role-roundcube.git
+[submodule "roles/email-service"]
+	path = roles/email-service
+	url = https://github.com/AndresBott/ansible-role-email-service.git
+[submodule "roles/postfix"]
+	path = roles/postfix
+	url = https://github.com/AndresBott/ansible-role-postfix.git
+[submodule "roles/dovecot"]
+	path = roles/dovecot
+	url = https://github.com/AndresBott/ansible-role-dovecot.git
+[submodule "roles/opendkim"]
+	path = roles/opendkim
+	url = https://github.com/AndresBott/ansible-role-opendkim.git
+[submodule "roles/spamassassin"]
+	path = roles/spamassassin
+	url = https://github.com/AndresBott/ansible-role-spamassassin.git
