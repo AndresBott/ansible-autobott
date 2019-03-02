@@ -1,0 +1,52 @@
+---
+#============================================================================================================
+# Basic Host
+#============================================================================================================
+basic_host_ssh_keys:
+  - "ssh-rsa AAA....AB3== MyPs"
+
+basic_host_ssh_keys_revoked: []
+
+# ========= Sources and apps ==============
+
+basic_host_sources_d: []
+#  - name: source.name
+#    repo: deb http://deb.debian.org /main
+#    key_url: http://debian.key
+#    key_id: 1AFC266
+#    enabled: no
+
+basic_host_extra_apps:
+- aptitude
+- joe
+
+
+# ========= Locales ==============
+basic_host_locale_to_be_generated:
+  - en_US.UTF-8 UTF-8
+  - es_ES.UTF-8 UTF-8
+
+basic_host_locale_lang: en_US.UTF-8
+
+
+#============================================================================================================
+# Disable roles
+#============================================================================================================
+run_role_fail2ban: yes
+run_role_monit: no
+run_role_nodejs: no
+run_role_letsencrypt: no
+run_role_pybackup: no
+run_role_pybackup_remote: yes
+# web servers
+run_role_php_fpm: no
+run_role_composer: no
+run_role_mysql: no
+run_role_webservices: yes
+run_role_gitea: no
+run_role_mediawiki: no
+run_role_roundcube: no
+run_role_parsoid: no
+run_role_nodered: no
+run_role_radicale: no
+

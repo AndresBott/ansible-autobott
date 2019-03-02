@@ -1,0 +1,22 @@
+.directory
+log
+logs/*
+node_backups/*
+node_tests/*
+*.retry
+
+
+# Ignore Ansible vault password file
+vault_password
+vault_password
+vault_pass.txt
+.vault_pass.txt
+
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff:
+.idea/
+*.iml
+.vagrant
+.molecule-venv

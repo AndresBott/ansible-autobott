@@ -1,0 +1,99 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+VAGRANT_VM_NAME = "ansible-autobott-linux-server"
+# boxes at https://vagrantcloud.com/search.
+VAGRAMT_VM_BASE = "debian/stretch64"
+
+
+Vagrant.configure("2") do |config|
+
+
+    config.vm.define "#{VAGRANT_VM_NAME}-full", primary: true do |item|
+        item.vm.box = "#{VAGRAMT_VM_BASE}"
+        #item.vm.hostname = "#{VAGRANT_VM_NAME}"
+
+        #config.vm.network "public_network"
+        item.vm.network "forwarded_port", guest: 9080, host: 9080
+        item.vm.network "forwarded_port", guest: 9443, host: 9443
+
+        item.vm.provider "virtualbox" do |v|
+            # set the name of the VM
+            v.name = "#{VAGRANT_VM_NAME}-full"
+
+            # use a linked clone of the imported machine
+            v.linked_clone = true
+
+            # use VBoxManage to make vm setting
+            #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+            v.customize ["modifyvm", :id, "--ioapic", "on"]
+            v.memory = 1024
+            v.cpus = 1
+        end
+    end
+
+    config.vm.define "#{VAGRANT_VM_NAME}-mini" do |item|
+        item.vm.box = "#{VAGRAMT_VM_BASE}"
+        #item.vm.hostname = "#{VAGRANT_VM_NAME}"
+
+        #config.vm.network "public_network"
+        item.vm.network "forwarded_port", guest: 9081, host: 9081
+        item.vm.network "forwarded_port", guest: 9444, host: 9444
+
+        item.vm.provider "virtualbox" do |v|
+            # set the name of the VM
+            v.name = "#{VAGRANT_VM_NAME}-mini"
+
+            # use a linked clone of the imported machine
+            v.linked_clone = true
+
+            # use VBoxManage to make vm setting
+            #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+            v.customize ["modifyvm", :id, "--ioapic", "on"]
+            v.memory = 1024
+            v.cpus = 1
+        end
+    end
+
+    config.vm.define "#{VAGRANT_VM_NAME}-email" do |item|
+        item.vm.box = "#{VAGRAMT_VM_BASE}"
+        #item.vm.hostname = "#{VAGRANT_VM_NAME}"
+
+        #config.vm.network "public_network"
+        item.vm.network "forwarded_port", guest: 9082, host: 9082
+        item.vm.network "forwarded_port", guest: 9445, host: 9445
+
+        item.vm.provider "virtualbox" do |v|
+            # set the name of the VM
+            v.name = "#{VAGRANT_VM_NAME}-email"
+
+            # use a linked clone of the imported machine
+            v.linked_clone = true
+
+            # use VBoxManage to make vm setting
+            #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+            v.customize ["modifyvm", :id, "--ioapic", "on"]
+            v.memory = 1024
+            v.cpus = 1
+        end
+    end
+
+
+    # Disable the new default behavior introduced in Vagrant 1.7, to
+    # ensure that all Vagrant machines will use the same SSH key pair.
+    # See https://github.com/mitchellh/vagrant/issues/5005
+    # added by default ansible
+    config.ssh.insert_key = false
+
+    config.vm.provision "ansible" do |ansible|
+        ansible.verbose = "v"
+        ansible.playbook = "../../autobott.yaml"
+        ansible.tags = ["enroll"]
+        ansible.groups = {
+            "vag-linux-servers" =>      ["#{VAGRANT_VM_NAME}-full","#{VAGRANT_VM_NAME}-mini","#{VAGRANT_VM_NAME}-email"],
+            "vag-nginx-web-servers" =>  ["#{VAGRANT_VM_NAME}-full","#{VAGRANT_VM_NAME}-mini"],
+            "vag-mail-servers" =>       ["#{VAGRANT_VM_NAME}-full","#{VAGRANT_VM_NAME}-email"],
+        }
+    end
+end
+
+

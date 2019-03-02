@@ -1,0 +1,49 @@
+---
+#============================================================================================================
+# NGINX
+#============================================================================================================
+
+#http_pam_auth_group: webadmins
+#http_pam_auth_group_id: 401
+
+# sometimes due to suggestions apache is installed
+# @todo task # add file based validation for   - libapache2-mod-php7.0 / 7.2  packages
+validation_packages_purge_group:
+  - apache2
+  - apache2-bin
+  - apache2-data
+  - apache2-utils
+  - libapache2-mod-php7.0
+  - libapache2-mod-php7.2
+
+
+validation_files_absent_group:
+  - file: apache2
+    path: "/etc/apache2/apache2.conf"
+    condition:
+    - absent
+
+  - file: apache2-bin
+    path: "/usr/sbin/apache2"
+    condition:
+    - absent
+
+  - file: apache2-data
+    path: "/usr/share/apache2"
+    condition:
+    - absent
+
+  - file: apache2-utils
+    path: "/usr/bin/ab"
+    condition:
+    - absent
+
+  - file: libapache2-mod-php7.0
+    path: "/usr/lib/apache2/modules/libphp7.0.so"
+    condition:
+    - absent
+
+  - file: libapache2-mod-php7.2
+    path: "/usr/lib/apache2/modules/libphp7.2.so"
+    condition:
+    - absent
