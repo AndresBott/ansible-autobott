@@ -46,9 +46,6 @@ after the playbook finished, you can now login to the sample configured services
 * monit (keep alive server): [https://monit.localhost:9443]
 * gitea server: [http://git.localhost:9080/] user: gitea@gitea.com password: gitea
 
-
-
-
 ##  Working with the dev branch 
 In order to keep master branch in a stable status, development is only performed and validated on the dev branch
 and later pushed to the master branch as a new release.

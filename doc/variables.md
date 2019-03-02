@@ -1,4 +1,30 @@
 # Variables:
+## List of roles
+* [Parsoid](#parsoid)
+* [Webservices](#webservices)
+* [Opendkim](#opendkim)
+* [Mysql](#mysql)
+* [Postfix](#postfix)
+* [Node-red](#node-red)
+* [Monit](#monit)
+* [Pybackup](#pybackup)
+* [Fail2ban](#fail2ban)
+* [Dovecot](#dovecot)
+* [Basic_host](#basic_host)
+* [Mediawiki](#mediawiki)
+* [Radicale](#radicale)
+* [Composer](#composer)
+* [Gitea](#gitea)
+* [Nginx](#nginx)
+* [Nodejs](#nodejs)
+* [Spamassassin](#spamassassin)
+* [Php-fpm](#php-fpm)
+* [Email-service](#email-service)
+* [Roundcube](#roundcube)
+* [Validation](#validation)
+
+## Details
+
 
 ### Parsoid:
 * `run_role_parsoid`: `yes` - flag to disable the role
@@ -14,6 +40,7 @@ parsoid_services:
 ```
 * `parsoid_port`: `8142` - parsoind port
 * `parsoid_bind_ip`: `'127.0.0.1'` - parsoind listen ip address
+
 ### Webservices:
 * `webservices_root`: `"/vhosts"` - root dir for all webservices (immutable)
 * `webservices_group`: `www-data` - default group for the http server (apache/nginx)
@@ -115,12 +142,14 @@ webservices:
         job: "/usr/bin/php"               # the action for the cron to do
 #=
 ```
+
 ### Opendkim:
 * `run_role_opendkim`: `yes` - flag to disable the role
 * `opendkim_signature_bits`: `1024` - encryption length: [1024 / 2048] this depends on your needs
 * `opendkim_socket`: `"unix"` - type of socket: "unix" for unix socket | "inet" for http
 * `opendkim_port`: `54321` - port used when using inet
 * `opendkim_socket_location`: `"/var/spool/postfix/opendkim/opendkim.sock"` - location of the socket if type unix, autobott postfix expects this location.
+
 ### Mysql:
 * `run_role_mysql`: `yes` - flag to run this role
 * `mysql_root_username`: `root` - The default root user installed by mysql - almost always root
@@ -184,6 +213,7 @@ mysql_users:
     password: secret
     priv: *.*:USAGE
 ```
+
 ### Postfix:
 * `run_role_postfix`: `yes` - flag to disable the role
 * `postfix_db_name`: `vmail` - mysql database name
@@ -192,6 +222,7 @@ mysql_users:
 * `postfix_db_pass`: `"vmail"` - mysql password
 * `postfix_data_dir`: `/vmails` - data directory that is shared between dovecot and postfix
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
+
 ### Node-red:
 * `run_role_nodered`: `yes` - flag to disable the role
 * `nodered_user`: `nodered` - system user
@@ -202,6 +233,7 @@ mysql_users:
 * `nodered_service_name`: `nodered` - systemd service name
 * `nodered_port`: `9663` - port to start node-red
 * `nodered_pacakges`: `[node-red,node-red-dashboard]` - node-red packages (not needed to change)
+
 ### Monit:
 * `run_role_monit`: `yes` - Flag to disable the role
 * `monit_port`: `2812` - monit port
@@ -241,6 +273,8 @@ monit_checks: []
     additional_conditions: []
     additional_raw: "" #see samples in /etc/monit/conf-available
 ```
+
+
 ### Pybackup:
 * `run_role_pybackup`: `yes` - flag to run this role
 * `run_role_pybackup_remote`: `yes` - flag to run the remote backup feature
@@ -271,13 +305,16 @@ pybackup_jobs:
 * `pybackup_remote_tmp`: `/tmp` - tmp location where the files will be copied during remote backup
 * `pybackup_remote_fetch_type`: `"ans"` - mechanism used to fetch the file from the remote server, "ans" will use ansible module fetch | "scp" wil use ssh scp
 * `pybackup_remote_out`: `"{{ playbook_dir }}/remote_backup"` - local directory where the remote backup will be stored you can pass this variable to the playbook as: --extra-vars "pybackup_remote_out=/home/ans"
+
 ### Fail2ban:
 * `run_role_fail2ban`: `yes` - 
+
 ### Dovecot:
 * `run_role_dovecot`: `yes` - flag to disable the role
 * `dovecot_quota_enabled`: `yes` - enable dovecot quotas
 * `dovecot_virtual_folders`: `[ 'All Mails', 'Flagged' ]` - enable custom virtual folders by providing an array of filters, current values: ['All Mails', 'Flagged']; set to no to disable
 * `dovecot_postmaster_email`: `""` - define the default postmaster (server owner) email address for this server
+
 ### Basic_host:
 * `basic_host_user`: `ans` - username for ansible login user
 * `basic_host_uid`: `900` - uid for ansible login user
@@ -367,6 +404,7 @@ basic_host_users:
 ```
 * `basic_host_users_extra`: `[]` - second list of users to be added, this allows to define users at different locations
 * `basic_host_users_deleted`: `[]` - list of users + user groups to NOT to be present. WARNING this will not delete their home
+
 ### Mediawiki:
 * `run_role_mediawiki`: `yes` - flag used to disable this role
 * `mediawiki_instances`: `[]` - list of different mediawiki installations, this allows you to run multiple wikis on one host
@@ -415,6 +453,7 @@ mediawiki_instances:
 * `mediawiki_VE_binary`: `"https://extdist.wmflabs.org/dist/extensions/VisualEditor-REL1_31-6854ea0.tar.gz"` - current installation source
 * `mediawiki_MFE_version`: `"REL1_31"` - current Mobile Frontend version to be installed
 * `mediawiki_MFE_binary`: `"https://extdist.wmflabs.org/dist/extensions/MobileFrontend-REL1_31-7f66849.tar.gz"` - current installation source
+
 ### Radicale:
 * `run_role_radicale`: `yes` - flag to disable the role
 * `radicale_user`: `radicale` - service user
@@ -425,8 +464,10 @@ mediawiki_instances:
 * `radicale_data_dir`: `/opt/radicale/data` - data location
 * `radicale_bound_ip`: `127.0.0.1` - service listen ip address
 * `radicale_port`: `5232` - service port
+
 ### Composer:
 * `run_role_composer`: `yes` - conditional used to disable this role, set to no to uninstall composer
+
 ### Gitea:
 * `run_role_gitea`: `yes` - flag used to disable this role
 * `gitea_bind_ip`: `"127.0.0.1"` - ip address to listen to
@@ -450,6 +491,7 @@ gitea_binary: "https://github.com/go-gitea/...."
 gitea_sum: "2830d77 ... de97c3471e07d"
 ```
 * `gitea_version_delete`: `["1.1.0"]` - dict of older versions that should be deleted
+
 ### Nginx:
 * `nginx_pgks_to_install`: `[nginx,nginx-full]` - packages to be installed
 * `nginx_user`: `www-data` - groupname for web services, this is default debian, don't change
@@ -474,9 +516,11 @@ nginx_modules:
   - mod-mail.conf
   - mod-stream.conf
 ```
+
 ### Nodejs:
 * `run_role_nodejs`: `yes` - flag to disable the role
 * `nodejs_version_repo`: `11 | {8,9,10,11}` - select the major version of nodejs you want to install; available versions based on https://github.com/nodesource/distributions/tree/master/deb
+
 ### Spamassassin:
 * `run_role_spamassassin`: `yes` - flag to disable the role
 * `spamassasin_required_score`: `2.5` - 
@@ -491,6 +535,7 @@ spamassasin_scores:
   DKIM_SIGNED: 1.0
   DKIM_VALID: -1.5
 ```
+
 ### Php-fpm:
 * `run_role_php_fpm`: `yes` - flag to run the role php-fpm, set to no to uninstall php
 * `php_output_buffering`: `4096` - ow much output data PHP should keep internally before pushing that data to the client see: http://php.net/output-bufferin
@@ -527,6 +572,7 @@ spamassasin_scores:
 * `php_opcache_error_log`: `""` - error log file, Empty string assumes "stderr"
 * `php_opcache_log_verbosity_level`: `1` - 0: fatal errors, 1: erros, 2 warning, 3 information,  4 debug.
 * `php_opcache_preferred_memory_model`: `""` - Preferred Shared Memory back-end. Leave empty and let the system decide.
+
 ### Email-service:
 * `run_email_service`: `yes` - flag to disable the role
 * `email_data_dir`: `/vmails` - Root directory for email accounts and data
@@ -578,6 +624,7 @@ email_alias:
     goto: main@localhost             # destination address
     active: yes                      # if the alias is active or not
 ```
+
 ### Roundcube:
 * `run_role_roundcube`: `yes` - flag used to disable this role
 * `roundcube_instances`: `[]` - list of roundcube instances that will be installed
@@ -675,6 +722,7 @@ roundcube_manual_plugins:
       plugin_file: jquery_mobile.php
       enable: no
 ```
+
 ### Validation:
 * `run_role_validation`: `yes` - flag to disable the validation role
 * `validation_packages_uninstall_group`: `[]` - list of packages to be uninstalled, define at group level
@@ -723,5 +771,6 @@ validation_http_host:
       value: "readapidenied"
 ```
 * `validation_http_host`: `[]` - same as validation_http_group but at to be defined at host level
+
 
 Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)
