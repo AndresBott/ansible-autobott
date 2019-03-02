@@ -67,3 +67,6 @@
 [submodule "roles/spamassassin"]
 	path = roles/spamassassin
 	url = https://github.com/AndresBott/ansible-role-spamassassin.git
+[submodule "plugins/callback-detailed"]
+	path = plugins/callback-detailed
+	url = https://github.com/AndresBott/ansible-callback-detailed.git

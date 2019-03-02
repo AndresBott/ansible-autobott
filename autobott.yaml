@@ -83,7 +83,7 @@
   # extras - proxy
   - gitea
   - parsoid
-  - nodered
+  - node-red
   - radicale
 
 #============================================================================================================
@@ -95,7 +95,7 @@
   become: true
   roles:
   - mysql
-  - email_service
+  - email-service
   - postfix
   - dovecot
   - opendkim

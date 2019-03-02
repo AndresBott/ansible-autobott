@@ -86,7 +86,7 @@ Vagrant.configure("2") do |config|
 
     config.vm.provision "ansible" do |ansible|
         ansible.verbose = "v"
-        ansible.playbook = "../../autobott.yaml"
+        ansible.playbook = "../autobott.yaml"
         ansible.tags = ["enroll"]
         ansible.groups = {
             "vag-linux-servers" =>      ["#{VAGRANT_VM_NAME}-full","#{VAGRANT_VM_NAME}-mini","#{VAGRANT_VM_NAME}-email"],
