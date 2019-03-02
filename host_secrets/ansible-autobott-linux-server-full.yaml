@@ -1,0 +1,6 @@
+---
+## In a production environment this file  should be encrypted
+secrets:
+  users:
+    jsmith_passwd: "changeme"
+    jsmith2_passwd: "changeme"

@@ -1,0 +1,8 @@
+#============================================================================================================
+# Ansible Autobott
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: This Ansible project holds all the resources: playbook, plugins, sample inventory and dependencies
+# (in the form of git submodules) that I use to manage and re-deploy my own servers in a reproducible way.
+#
+#============================================================================================================
+autobott_version: 1.0

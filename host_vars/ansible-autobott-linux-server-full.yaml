@@ -1,0 +1,807 @@
+---
+#============================================================================================================
+# BasicHosts
+#============================================================================================================
+basic_host_hostname: "ansible-autobott-linux-server-full"
+
+basic_host_extra_host_entires:
+  - 127.0.0.1 sample-wiki.localhost
+
+basic_host_ssh_allow_passwd_login: no
+basic_host_ssh_allow_passwd_login_group:
+  group_name: ssh_passwd_login_allowed
+  gid: 401
+
+basic_host_ssh_sftp: yes
+# use groups definitions to configure sftp jails
+
+# ========= USERS ==============
+basic_host_groups:
+  - name: sftp
+    gid: 402
+    sftp_jail:
+      enabled:  yes
+      base_dir: "/vhosts"
+      allow_password: yes
+      umask: "0077"
+
+  - name: gallifrey
+    gid: 403
+
+  - name: trenzalore
+    gid: 404
+
+basic_host_system_users:
+# Example:
+  - username: "tardis"
+    name: "that blue box"
+    groups: [ 'trenzalore','gallifrey']
+    uid: 2001
+    gid: 2001
+
+basic_host_users_extra:
+  - username: jsmith
+    name: "john Smith"
+    bashrc: yes
+    groups: []
+    uid: 1001
+    password: "{{ secrets.users.jsmith_passwd | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}"
+
+  - username: jsmith2
+    name: "john Smith2"
+    bashrc: yes
+    groups: []
+    uid: 1002
+    password: "{{ secrets.users.jsmith2_passwd | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}"
+#============================================================================================================
+# Fail2ban
+#============================================================================================================
+
+#============================================================================================================
+# Monit
+#============================================================================================================
+run_role_monit: yes
+monit_httpd: yes
+monit_interval: 120
+monit_initial_delay: 1
+
+monit_alert:
+  notify:
+    - user1@mail.com
+  replyto: "admin@mail.com"
+  smtp:
+    url:  ""
+    port: 587
+    username: email@mail.com
+    password: sompassword
+    tls: yes
+
+monit_checks:
+
+  - name: disk-root
+    enabled: yes
+    type: disk
+    path: "/"
+    additional_conditions:
+      - "if SPACE usage > 80% then alert"
+#============================================================================================================
+# NodeJs
+#============================================================================================================
+run_role_nodejs: yes
+
+#============================================================================================================
+# Lets encrypt
+#============================================================================================================
+run_role_letsencrypt: yes
+letsEncryptMail: "mail@mail.com"
+
+#============================================================================================================
+# Pybackup
+#============================================================================================================
+run_role_pybackup: yes
+pybackup_jobs:
+  - name: gitea # job name
+    backup_config_location: /vhosts/gitea/gitea.pybackup.conf.ini
+    backup_dir: /vhosts/gitea/home_dir/gitea # directory that will be backed up
+    follow_symlinks: yes # follows sym links when running backup
+    output_dir: /vhosts/gitea/backups/
+    tmp_dir: "" # relative or absolute tmp dir for backup operations
+    backup_mysql: gitea
+    keep_old: 4 # amount of older backups to keep
+    file_owner: gitea # change the ownership of the compressed backup file
+    file_mode: "0700" # change the mode of the compressed backup file
+    cron:
+      enabled: yes
+      minute: "0"
+      hour: "3"
+      day_of_month: "1"
+      day_of_week: "*"
+      month: "*"
+    remote: yes # perfomr a remote backup of this job when running tag: role_pybackup_remote
+
+
+
+#============================================================================================================
+# Nginx
+#============================================================================================================
+nginx_WorkerProcesses: 1 # should be same as cpu count for best performance
+nginx_WorkerConnections: 3000
+nginx_ClientMaxBodySizes: 38m
+nginx_defaultErrorPage: ""
+
+#============================================================================================================
+# PHP
+#============================================================================================================
+run_role_php_fpm: yes
+# inherit from ovh group
+
+
+
+#============================================================================================================
+# MYSQL
+#============================================================================================================
+run_role_mysql: yes
+mysql_root_password: "root" # must be plain text
+
+#============================================================================================================
+# Backup
+#============================================================================================================
+aditional_maintanence_backup: []
+
+
+#============================================================================================================
+# WEBSERVICES
+#============================================================================================================
+webservices:
+
+  - name: sample_wiki #=================================================================
+    enabled: yes
+    uid: 1101
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: sample-wiki.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: ""
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: []
+          htpasswd_filename: no
+          htpasswd_file_users:  []
+          # letsencrypt ssl
+          ssl:
+            type: no
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: "default"          # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir: []                    # list of additional dirs where php has access to
+    mysql:
+      enabled: yes
+      db_name: "default"                  # database name, if set to "default" uses webservice name
+      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
+      encoding: "default"                 # define the character encoding, "default" is: utf8
+      user: "default"                     # database user, if set to "default" uses webservice name
+      password: "changeme"                # login password
+
+    cron_actions:
+      - name: "run som maintainance"      # identification string
+        enabled: no                       # se to no to don't run the cron job
+        minute: "*/30"                    # minute component of the cron expression
+        hour: "*"                         # hour component of the cron expression
+        day: "*"                          # day component of the cron expression
+        weekday: "*"                      # weekday component of the cron expression
+        month:  "*"                       # month component of the cron expression
+        user: "monit"                     # user for the cron
+        job: "/usr/bin/php"               # the action for the cron to do
+
+  - name: sample_wiki2 #=================================================================
+    enabled: yes
+    uid: 1102
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: sample-wiki2.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: ""
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: []
+          htpasswd_filename: no
+          htpasswd_file_users:  []
+          # letsencrypt ssl
+          ssl:
+            type: no
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: "default"          # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir: []                    # list of additional dirs where php has access to
+    mysql:
+      enabled: yes
+      db_name: "default"                  # database name, if set to "default" uses webservice name
+      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
+      encoding: "default"                 # define the character encoding, "default" is: utf8
+      user: "default"                     # database user, if set to "default" uses webservice name
+      password: "changeme"                # login password
+
+    cron_actions:
+      - name: "run som maintainance"      # identification string
+        enabled: no                       # se to no to don't run the cron job
+        minute: "*/30"                    # minute component of the cron expression
+        hour: "*"                         # hour component of the cron expression
+        day: "*"                          # day component of the cron expression
+        weekday: "*"                      # weekday component of the cron expression
+        month:  "*"                       # month component of the cron expression
+        user: "monit"                     # user for the cron
+        job: "/usr/bin/php"               # the action for the cron to do
+
+  - name: private_html #=================================================================
+    enabled: yes
+    uid: 1103
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+    sample_content: "html"
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: private.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: ""
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: yes
+          authentication_paths: no
+          htpasswd_filename: no
+          htpasswd_file_users:
+            - user: private
+              pass: 1234
+              enabled: yes
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: no                        # set to 'no' to don't have a php worker
+    mysql:
+      enabled: no
+    cron_actions: []
+
+  - name: sample_php #=================================================================
+    enabled: yes
+    uid: 1104
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+    sample_content: "php"
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: php.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: yes
+          # http proxy settings
+          proxy_port: ""
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: no
+          htpasswd_filename: no
+          htpasswd_file_users: []
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: "default"          # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir: []                    # list of additional dirs where php has access to
+    mysql:
+      enabled: no
+    cron_actions: []
+
+  - name: roundcube #=================================================================
+    enabled: yes
+    uid: 1105
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+    sample_content: "php"
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: webmail.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: ""
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: no
+          htpasswd_filename: no
+          htpasswd_file_users: []
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: 30711              # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir: []                    # list of additional dirs where php has access to
+    mysql:
+      enabled: yes
+      db_name: "default"                  # database name, if set to "default" uses webservice name
+      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
+      encoding: "default"                 # define the character encoding, "default" is: utf8
+      user: "default"                     # database user, if set to "default" uses webservice name
+      password: "changeme"                # login password
+
+    cron_actions: []
+
+  - name: monit  #=================================================================
+    enabled: yes
+    uid: 1204
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: monit.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: proxy
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: 2812
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: []
+          htpasswd_filename: no
+          htpasswd_file_users:  []
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+    php:
+      enabled: no
+    mysql:
+      enabled: no
+    cron_actions: []
+
+
+  - name: "{{ gitea_user }}" #=================================================================
+    enabled: yes
+    uid: 1205
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: git.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: proxy
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: "{{ gitea_port }}"
+          proxy_headers: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: []
+          htpasswd_filename: no
+          htpasswd_file_users:  []
+          # letsencrypt ssl
+          ssl:
+            type: "no"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: no                        # set to 'no' to don't have a php worker
+    mysql:
+      enabled: yes
+      db_name:    "{{ gitea_user }}"
+      collation:  "default"
+      encoding:   "default"
+      user:       "{{ gitea_user }}"
+      password:   "{{ gitea_db_pass }}"
+
+
+
+#============================================================================================================
+# Gitea
+#============================================================================================================
+run_role_gitea: yes
+gitea_data_dir: "{{ webservices_root }}/{{ gitea_user }}/home_dir/gitea/data"
+gitea_domain: git.localhost
+gitea_http_port: 9080 # used in vagrant
+
+#============================================================================================================
+# Mediawiki
+#============================================================================================================
+run_role_mediawiki: yes
+mediawiki_instances:
+  - name: wiki1                                     # used to identify the different wiki installations
+    user: sample_wiki                               # system user to be used
+    group: sample_wiki                              # system group to be used
+    db_name: sample_wiki                            # database name
+    db_user: sample_wiki                            # database user
+    db_pass: "changeme"                             # database password
+    install_dir: "{{webservices_root}}/sample_wiki/home_dir" # root installation dir
+    public_html: "{{webservices_root}}/sample_wiki/home_dir/public_html" # public available directory
+    config:
+      site_name: "sample wiki"                      # Name of the wiki site
+      namespace: "sample_wiki"                      # used to differentiate the wikies in parsoid
+      admin_user: "wiki"                            # wiki admin username (defined on installation)
+      admin_pass: "changeme"                        # wiki admin password (defined on installation)
+      base_url: "http://sample-wiki.localhost:9080"     # full root domain of the wiki
+      emergency_contact_mail: info@localhost.com    # emercenty contact email
+      password_sender_mail: info@localhost.com      # password reset sender email
+      locale: "en_US.utf8"                          # used for imagemagic, needs to be a valid locale
+      lang: "en"                                    # Site language code, should be one of the list in ./languages/data/Names.php
+      secret_key: "changeme"                        # secret key
+      site_upgrade_key: "changeme"                  # used to turn on the web installer while LocalSettings.php is in place
+      allowed_extensions:                           # allowed upload extensions
+        - pdf
+        - tiff
+      whitelisted_extensions:                       # whitelist extensions that are normally not allowed
+        - txt
+        - js
+      allow_js: no                                  # allow the upload of javascript files
+      enable_visualeditor: yes                      # flag to enable visual editor and usage of parsoid (needed by visual editor)
+      visualeditor_parsoid_bind_ip: 127.0.0.1       # parsoid server ip
+      visualeditor_parsoid_bind_posrt: 8142         # parsoid server port
+      enable_mobile_frontend: yes                   # enable mobile frontend theme
+      enable_custom_css: yes                        # add a custom css with small changes (located in templates)
+
+  - name: wiki2                                     # used to identify the different wiki installations
+    user: sample_wiki2                              # system user to be used
+    group: sample_wiki2                              # system group to be used
+    db_name: sample_wiki2                            # database name
+    db_user: sample_wiki2                            # database user
+    db_pass: "changeme"                             # database password
+    install_dir: "{{webservices_root}}/sample_wiki2/home_dir" # root installation dir
+    public_html: "{{webservices_root}}/sample_wiki2/home_dir/public_html" # public available directory
+    config:
+      site_name: "sample wiki2"                      # Name of the wiki site
+      namespace: "sample_wiki2"                      # used to differentiate the wikies in parsoid
+      admin_user: "wiki"                            # wiki admin username (defined on installation)
+      admin_pass: "changeme"                        # wiki admin password (defined on installation)
+      base_url: "http://sample-wiki2.localhost:9080"     # full root domain of the wiki
+      emergency_contact_mail: info@localhost.com    # emercenty contact email
+      password_sender_mail: info@localhost.com      # password reset sender email
+      locale: "en_US.utf8"                          # used for imagemagic, needs to be a valid locale
+      lang: "en"                                    # Site language code, should be one of the list in ./languages/data/Names.php
+      secret_key: "changeme"                        # secret key
+      site_upgrade_key: "changeme"                  # used to turn on the web installer while LocalSettings.php is in place
+      allowed_extensions:                           # allowed upload extensions
+        - pdf
+        - tiff
+      whitelisted_extensions:                       # whitelist extensions that are normally not allowed
+        - txt
+        - js
+      allow_js: no                                  # allow the upload of javascript files
+      enable_visualeditor: yes                      # flag to enable visual editor and usage of parsoid (needed by visual editor)
+      visualeditor_parsoid_bind_ip: 127.0.0.1       # parsoid server ip
+      visualeditor_parsoid_bind_posrt: 8142         # parsoid server port
+      enable_mobile_frontend: yes                   # enable mobile frontend theme
+      enable_custom_css: yes                        # add a custom css with small changes (located in templates)
+
+#============================================================================================================
+# Roundcube
+#============================================================================================================
+run_role_roundcube: yes
+
+roundcube_instances:
+  - name: webmail                                 # used to identify the different wiki installations
+    user: roundcube                               # system user to be used
+    group: roundcube                              # system group to be used
+    db_name: roundcube                            # database name
+    db_user: roundcube                            # database user
+    db_pass: "changeme"                           # database password
+    install_dir: "{{webservices_root}}/roundcube/home_dir" # root installation dir
+    public_html: "{{webservices_root}}/roundcube/home_dir/public_html" # public available directory
+    tmp_dir: "{{webservices_root}}/roundcube/home_dir/tmp"
+    config:
+      ignore_certificate_validation: yes # this is needed for simple self signed certificates, and should no be used in production
+      mail_server: "mail.localhost"
+      cypher: "Quuba7leeshahfoh2eizay8i" # excatly 24 chars
+      plugins:
+        - managesieve
+      manual_plugins: []
+
+
+#============================================================================================================
+# Parsoid
+#============================================================================================================
+run_role_parsoid: yes
+parsoid_services:
+  - name: wiki1                                           # used to identify the different wiki installations
+    api_uri: "http://sample-wiki.localhost:9080/api.php"         # url to listen to
+    namespace: "sample_wiki"                              # the mediawiki namespace (domain)
+
+  - name: wiki2                                          # used to identify the different wiki installations
+    api_uri: "http://sample-wiki2.localhost:9080/api.php"         # url to listen to
+    namespace: "sample_wiki2"                              # the mediawiki namespace (domain)
+
+#============================================================================================================
+# Email
+#============================================================================================================
+email_debug: true
+email_domains:
+  - domain: localhost           # domain to add accounts
+    description: "mail Server"  # description
+    quota: ""                   # domain quota in Kb, disabled if ""
+    active: yes                 # enable/disable all emails of a domain
+
+email_accounts:
+  - email: main@localhost       # full email address, must contain @
+    password: 1234              # clear text password, you should store it in vault or similar
+    name: "main email"          # email account owner name
+    quota: 41943040             # account quota in Kb
+    ham_folder: [".Archivados"] # ham learning folder
+    spam_folder: [".Spam"]      # spam learning folder
+    active: yes                 # enable/disable this email
+
+email_alias:
+  - address: postmaster@andresbott.com
+    goto: main@localhost
+    active: yes
+
+
+#============================================================================================================
+# Validations
+#============================================================================================================
+#validation_files_absent_host:
+#  - file: php-fpm7.0
+#    path: "/etc/php/7.0/fpm/php.ini"
+#    condition:
+#    - absent
+#
+#  - file: php-fpm7.2
+#    path: "/etc/php/7.2/fpm/php.ini"
+#    condition:
+#    - absent
+#
+#  - file: php
+#    path: "/usr/bin/php"
+#    condition:
+#    - absent
+
+validation_shell_host:
+  # check of php version is 7.0
+  - shell: php -v | head -1 | grep -o -P '\d+\.\d'
+    condition:
+    - rc0
+    - stdout: "7.0"
+  # check if monit is returning status reports
+  - shell: monit status
+    condition:
+    - rc0
+  # check if nodejs is ok
+  - shell: node --version
+    condition:
+    - rc0
+  # check if let's encrypt certbot is present
+  - shell:  certbot --version
+    condition:
+    - rc0
+
+
+validation_http_host:
+
+  - url: http://sample-wiki.localhost:9080/
+    from_host: true
+    condition:
+    - rc: 200  # check for return code == 200
+
+  # check for private wiki
+  - url: http://sample-wiki.localhost:9080/api.php?action=query&list=search&srsearch=Craig%20Noone&format=xml
+    from_host: true
+    condition:
+    - header: "mediawiki_api_error"
+      value: "readapidenied"
+    - rc: 200
+
+  - url: http://sample-wiki2.localhost:9080/
+    from_host: true
+    condition:
+    - rc: 200
+
+  - url: https://monit.localhost:9443
+    from_host: true
+    condition:
+    - rc: 200
+
+  - url: http://monit.localhost:9080
+    from_host: true
+    condition:
+    - rc: 301
+
+  - url: http://git.localhost:9080
+    from_host: true
+    condition:
+    - rc: 200
+
+  - url: http://php.localhost:9080
+    from_host: true
+    condition:
+    - rc: 301
+
+  - url: https://php.localhost:9443
+    from_host: true
+    condition:
+    - rc: 200

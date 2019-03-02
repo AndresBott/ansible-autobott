@@ -1,6 +1,3 @@
-#  ansible-autobott
-
-This ansible project holds all the resources: playbook, plugins, sample inventory and dependencies (in the form of git submodules) that I use to manage and re-deploy my own servers in a reproducible way.
 ## About:
 
 Ansible-autbott allows to maintain several services on debian based server with similar offering to a host provider:
@@ -62,11 +59,3 @@ You can get information about the last run by checking "/root/autobott_info.yaml
 ## Extended documentation
 
 For further details check the documentation in the [doc](doc) folder
-
-
-
-## Author Information
-This playbook  was created by: Andres bott <contact@andresbott.com>
-
-
-Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)

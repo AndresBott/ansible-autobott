@@ -1,0 +1,110 @@
+---
+#============================================================================================================
+# Basic Settings
+#============================================================================================================
+
+- hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Load hosts secrets if exist
+      include_vars: "{{ item }}"
+      with_first_found:
+        - files:
+            - "{{ inventory_dir }}/host_secrets/{{ inventory_hostname }}.yaml"
+            - "{{ playbook_dir }}/host_secrets/{{ inventory_hostname }}.yaml"
+          skip: true
+      tags:
+        - always
+
+    - name: Load secrets.yaml if exists
+      include_vars: "{{ item }}"
+      with_first_found:
+        - files:
+            - "{{ inventory_dir }}/host_secrets/secrets.yaml"
+            - "{{ playbook_dir }}/host_secrets/secrets.yaml"
+          skip: true
+      tags:
+        - always
+
+    - name: Load autobott metadata
+      include_vars: "{{ playbook_dir }}/meta/main.yaml"
+      tags:
+        - always
+
+    - name: Update ansible metadata on client
+      template:
+        src: autobott_info.j2
+        dest: "/root/autobott_info.yaml"
+        owner: root
+        group: root
+        mode: 0600
+      tags:
+        - always
+      changed_when: false
+
+  roles:
+  ## Basic Host
+  - role: basic_host
+
+#============================================================================================================
+# Linux server
+#============================================================================================================
+#@todo role # nas storage / samba share
+#@todo role # add a role to install java / openjdk
+
+- hosts:
+    - linux-servers
+    - vag-linux-servers
+  become: true
+  roles:
+  - fail2ban
+  - monit
+  - nodejs
+  - letsencrypt
+  - pybackup
+
+#============================================================================================================
+# Web Servers
+#============================================================================================================
+- hosts:
+    - nginx-web-servers
+    - vag-nginx-web-servers
+  become: true
+  roles:
+  - nginx
+  - php-fpm
+  - mysql
+  - webservices
+  # extras - php based
+  - composer
+  - mediawiki
+  - roundcube
+  # extras - proxy
+  - gitea
+  - parsoid
+  - node-red
+  - radicale
+
+#============================================================================================================
+# Mail Servers
+#============================================================================================================
+- hosts:
+    - mail-servers
+    - vag-mail-servers
+  become: true
+  roles:
+  - mysql
+  - email-service
+  - postfix
+  - dovecot
+  - opendkim
+  - spamassassin
+
+#============================================================================================================
+# Maintainance
+#============================================================================================================
+- hosts: all
+  become: true
+  roles:
+    - validation

@@ -1,0 +1,5 @@
+---
+# this has been deployed with Ansible-autobott verions {{ autobott_version }} on {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+# with tags: "{{  ansible_run_tags }}"
+autobott_version: {{ autobott_version }}
+autobott_last_run: {{ ansible_date_time.date }}|{{ ansible_date_time.time }}
