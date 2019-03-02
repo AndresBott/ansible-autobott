@@ -24,9 +24,6 @@ for example the vagrant inventory:
 
 You can use vault encrypted variables in your project and use a password file to run the playbook.
 
-The configuration file points the password file to ./vault_pass.txt within ansible-autodoc project and the file is
-part of .gitignore to avoid adding it to version control.
-
 If you have not specified a password file, use the command line parameter as 
 
     ansible-vault [encrypt | decrypt] <file> --vault-password-file="/path/to/vault_pass.txt"
