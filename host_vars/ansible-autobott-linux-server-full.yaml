@@ -175,7 +175,7 @@ webservices:
           default_server: no
           # http proxy settings
           proxy_port: ""
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -248,7 +248,7 @@ webservices:
           default_server: no
           # http proxy settings
           proxy_port: ""
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -322,7 +322,7 @@ webservices:
           default_server: no
           # http proxy settings
           proxy_port: ""
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -375,7 +375,7 @@ webservices:
           default_server: yes
           # http proxy settings
           proxy_port: ""
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -412,70 +412,6 @@ webservices:
       enabled: no
     cron_actions: []
 
-  - name: roundcube #=================================================================
-    enabled: yes
-    uid: 1105
-    shell: "/bin/false"
-    ssh_key: []
-    groups: []
-    password: ""
-    sample_content: "php"
-
-    nginx:
-      enabled: yes
-      servers:
-        - domain: webmail.localhost
-          add_fqdn_subdomain: no
-          subdomain_wildcard: no
-          template: default
-          # port listen
-          port: 9080
-          port_ssl: 9443
-          default_server: no
-          # http proxy settings
-          proxy_port: ""
-          proxy_headers: []
-          # redirection
-          redirect: no
-          redirect_type: 302
-          # logs
-          log_access: no
-          log_errors: yes
-          # document root
-          document_root: "default"
-          #authentication
-          authentication: no
-          authentication_paths: no
-          htpasswd_filename: no
-          htpasswd_file_users: []
-          # letsencrypt ssl
-          ssl:
-            type: "force"
-            provider: "selfsigned"
-            letsencrypt_notifications_email: ""
-            staging: yes
-            redirect_type: 301
-
-    php:
-      enabled: yes                        # set to 'no' to don't have a php worker
-      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
-      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
-      pm_start_servers: 2                 # amount of start child processes
-      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
-      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
-      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
-      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
-      error_reporting: 30711              # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
-      open_basedir: []                    # list of additional dirs where php has access to
-    mysql:
-      enabled: yes
-      db_name: "default"                  # database name, if set to "default" uses webservice name
-      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
-      encoding: "default"                 # define the character encoding, "default" is: utf8
-      user: "default"                     # database user, if set to "default" uses webservice name
-      password: "changeme"                # login password
-
-    cron_actions: []
 
   - name: monit  #=================================================================
     enabled: yes
@@ -498,7 +434,7 @@ webservices:
           default_server: no
           # http proxy settings
           proxy_port: 2812
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -547,7 +483,7 @@ webservices:
           default_server: no
           # http proxy settings
           proxy_port: "{{ gitea_port }}"
-          proxy_headers: []
+          proxy_lines: []
           # redirection
           redirect: no
           redirect_type: 302
@@ -578,6 +514,123 @@ webservices:
       encoding:   "default"
       user:       "{{ gitea_user }}"
       password:   "{{ gitea_db_pass }}"
+
+
+  - name: "radicale" #=================================================================
+    enabled: yes
+    uid: 1206
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: radicale.localhost
+          template: proxy
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: "{{ radicale_port }}"
+          proxy_lines:
+            - "proxy_set_header     X-Remote-User $remote_user"
+          # logs
+          log_access: no
+          log_errors: yes
+
+          #authentication
+          authentication: yes
+          authentication_paths: []
+          htpasswd_filename: no
+          htpasswd_file_users:
+            - user: test1
+              pass: 1234
+              enabled: yes
+            - user: test2
+              pass: 1234
+              enabled: yes
+          # letsencrypt ssl
+          ssl:
+            type: "no"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: no
+    mysql:
+      enabled: no
+
+    cron_actions: []
+
+  - name: roundcube #=================================================================
+    enabled: yes
+    uid: 1105
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+    sample_content: "php"
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: webmail.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # http proxy settings
+          proxy_port: ""
+          proxy_lines: []
+          # redirection
+          redirect: no
+          redirect_type: 302
+          # logs
+          log_access: no
+          log_errors: yes
+          # document root
+          document_root: "default"
+          #authentication
+          authentication: no
+          authentication_paths: no
+          htpasswd_filename: no
+          htpasswd_file_users: []
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: 30711              # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir: []                    # list of additional dirs where php has access to
+    mysql:
+      enabled: yes
+      db_name: "default"                  # database name, if set to "default" uses webservice name
+      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
+      encoding: "default"                 # define the character encoding, "default" is: utf8
+      user: "default"                     # database user, if set to "default" uses webservice name
+      password: "changeme"                # login password
+
+    cron_actions: []
 
 
 
@@ -661,6 +714,33 @@ mediawiki_instances:
       enable_custom_css: yes                        # add a custom css with small changes (located in templates)
 
 #============================================================================================================
+# Parsoid
+#============================================================================================================
+run_role_parsoid: yes
+parsoid_services:
+  - name: wiki1
+    api_uri: "http://sample-wiki.localhost:9080/api.php"
+    namespace: "sample_wiki"
+
+  - name: wiki2
+    api_uri: "http://sample-wiki2.localhost:9080/api.php"
+    namespace: "sample_wiki2"
+
+#============================================================================================================
+# Radicale
+#============================================================================================================
+run_role_radicale: yes
+radicale_user: radicale
+radicale_uid: 1206
+radicale_group: radicale
+radicale_gid: 1206
+radicale_install_dir: "{{webservices_root}}/radicale/home_dir"
+radicale_data_dir: "{{webservices_root}}/radicale/home_dir/data"
+#radicale_bound_ip: 127.0.0.1
+#radicale_port: 5232
+
+
+#============================================================================================================
 # Roundcube
 #============================================================================================================
 run_role_roundcube: yes
@@ -668,7 +748,9 @@ run_role_roundcube: yes
 roundcube_instances:
   - name: webmail                                 # used to identify the different wiki installations
     user: roundcube                               # system user to be used
-    group: roundcube                              # system group to be used
+    uid: 1105
+    group: roundcube
+    gid: 1105
     db_name: roundcube                            # database name
     db_user: roundcube                            # database user
     db_pass: "changeme"                           # database password
@@ -680,22 +762,27 @@ roundcube_instances:
       mail_server: "mail.localhost"
       cypher: "Quuba7leeshahfoh2eizay8i" # excatly 24 chars
       plugins:
+        - archive
         - managesieve
-      manual_plugins: []
+        - attachment_reminder
+        - emoticons
+        - hide_blockquote
+        - markasjunk
+        - newmail_notifier
+        - show_additional_headers
+        - userinfo
+        - zipdownload
+        - vcard_attachments
+      github_plugins:
+        - carddav
+        - gravatar
+        - authres_status
+        - automatic_addressbook_ng
+        - persistent_login
 
 
-#============================================================================================================
-# Parsoid
-#============================================================================================================
-run_role_parsoid: yes
-parsoid_services:
-  - name: wiki1                                           # used to identify the different wiki installations
-    api_uri: "http://sample-wiki.localhost:9080/api.php"         # url to listen to
-    namespace: "sample_wiki"                              # the mediawiki namespace (domain)
 
-  - name: wiki2                                          # used to identify the different wiki installations
-    api_uri: "http://sample-wiki2.localhost:9080/api.php"         # url to listen to
-    namespace: "sample_wiki2"                              # the mediawiki namespace (domain)
+
 
 #============================================================================================================
 # Email

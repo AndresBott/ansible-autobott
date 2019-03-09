@@ -1,3 +1,11 @@
+2019/03/09 - Release 1.0.1
+* Roundcube now installs plugins from github
+* Minor typos corrected
+* Radicale now allows to create users with id and groups with gid
+
+2019/03/01 - Release 1.0 
+* Refactoring complete 
+* Published 25 repositories to github
 
 
 2019/01/10 
