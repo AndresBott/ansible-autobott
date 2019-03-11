@@ -7,6 +7,7 @@
 * [Postfix](#postfix)
 * [Node-red](#node-red)
 * [Monit](#monit)
+* [Letsencrypt](#letsencrypt)
 * [Pybackup](#pybackup)
 * [Fail2ban](#fail2ban)
 * [Dovecot](#dovecot)
@@ -216,11 +217,6 @@ mysql_users:
 
 ### Postfix:
 * `run_role_postfix`: `yes` - flag to disable the role
-* `postfix_db_name`: `vmail` - mysql database name
-* `postfix_db_host`: `127.0.0.1` - mysql database host/ip
-* `postfix_db_user`: `vmail` - mysql user
-* `postfix_db_pass`: `"vmail"` - mysql password
-* `postfix_data_dir`: `/vmails` - data directory that is shared between dovecot and postfix
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
 
 ### Node-red:
@@ -274,6 +270,17 @@ monit_checks: []
     additional_raw: "" #see samples in /etc/monit/conf-available
 ```
 
+### Letsencrypt:
+* `run_role_letsencrypt`: `yes` - flag to disable the role
+* `letsencrypt_renew_hooks`: `[]` - list of hooks to add to cron after a certificate has been renewed
+example: 
+
+
+```yaml
+letsencrypt_renew_hooks:
+ - "nginx -t -q && nginx -s reload"
+```
+* `letsencrypt_renew_email`: `""` - provide an email address to send an email notification of certificate renewal
 
 ### Pybackup:
 * `run_role_pybackup`: `yes` - flag to run this role
@@ -313,7 +320,15 @@ pybackup_jobs:
 * `run_role_dovecot`: `yes` - flag to disable the role
 * `dovecot_quota_enabled`: `yes` - enable dovecot quotas
 * `dovecot_virtual_folders`: `[ 'All Mails', 'Flagged' ]` - enable custom virtual folders by providing an array of filters, current values: ['All Mails', 'Flagged']; set to no to disable
-* `dovecot_postmaster_email`: `""` - define the default postmaster (server owner) email address for this server
+* `dovecot_mailbox_spam_expurge`: `60d` - after how many days emails in the spam folder will be deleted
+* `dovecot_mailbox_autoexpunge`: `[]` - a set of mailboxes with different expunge values (delete after x days)
+example: 
+
+
+```yaml
+- name: Guardar6meses
+    days: 180
+```
 
 ### Basic_host:
 * `basic_host_user`: `ans` - username for ansible login user
@@ -535,6 +550,24 @@ spamassasin_scores:
   DKIM_SIGNED: 1.0
   DKIM_VALID: -1.5
 ```
+* `spamassasin_whitelist_patterns`: `[]` - use white list patterns like: "friend@somewhere.com", "*@isp.com", or "*.domain.net", make sure that they have valid dkim and spf entries
+example: 
+
+
+```yaml
+spamassasin_whitelist_patterns:
+  - "*@austrialpin.at"
+  - "*@*.example.com"
+```
+* `spamassasin_bayes_coron`: `{hour:4,minute:0}` - specify when sa learn will run
+example: 
+
+
+```yaml
+spamassasin_bayes_cron:
+  hour: 4
+  minute: 0
+```
 
 ### Php-fpm:
 * `run_role_php_fpm`: `yes` - flag to run the role php-fpm, set to no to uninstall php
@@ -585,8 +618,7 @@ spamassasin_scores:
 * `email_db_user`: `vmail` - mysql user
 * `email_db_pass`: `"vmail"` - mysql password
 * `email_postmaster`: `"postmaster@{{ ansible_fqdn }}"` - email server postmaster emails
-* `email_server_domain`: `mail.localhost` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to.
-* `email_subdomain`: `mail` - subdomain part of the domain
+* `email_server_domain`: `"mail.{{ fqdn }}"` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to. the
 * `email_debug`: `no` - add some email debug into the configuration ( don't use in production)
 * `email_cert_provider`: `""` - set to "letsencrypt" to use let's encrypt, any different string will use a self signed certificate or
 * `email_domains`: `[]` - configuration of domain names the server will handle
@@ -633,7 +665,7 @@ example:
 
 ```yaml
 roundcube_instances:
-  - name: webmail                                 # used to identify the different wiki installations
+  - name: webmail                                 # used to identify the different roundcube installations
     user: roundcube                               # system user to be used
     group: roundcube                              # system group to be used
     db_name: roundcube                            # database name
@@ -645,9 +677,9 @@ roundcube_instances:
     config:
       ignore_certificate_validation: yes           # this is needed for simple self signed certificates, and should no be used in production
       mail_server: "mail.localhost"
-      cypher: "Quaba75eesdahfoh2eizay8i"           # excatly 24 chars
+      cypher: "Quaba75eesdahfoh2eizay8i"           # exactly 24 chars
       plugins: []                                  # see <installdir>/plugins, these are provided with roundcube
-      manual_plugins: []
+      github_plugins: []         # select from predefined plugins to be installed from github, see variable roundcube_github_plugins
 ```
 * `roundcube_current_version`: `1.3.3` - roundcube version to install
 * `roundcube_sources`: `` - roundcube installation candidates, this can be changed per configuration
@@ -665,62 +697,12 @@ example:
 
 
 ```yaml
-roundcube_manual_plugins:
-    - name: gravatar
-      url: https://github.com/prodrigestivill/roundcube-gravatar/archive/master.zip
-      repo_name: roundcube-gravatar-master
-      plugin_file: gravatar.php
-      config_file: 20_roundcube/gravatar.config-inc.php.j2
-       #====
-    - name: authres_status
-      url: https://github.com/pimlie/authres_status/archive/master.zip
-      repo_name: authres_status-master
-      plugin_file: authres_status.php
-      config_file: 20_roundcube/authres_status.config-inc.php.j2
-       #====
-    - name: automatic_addressbook
-      url: https://github.com/sblaisot/automatic_addressbook/archive/master.zip
-      repo_name: automatic_addressbook-master
-      plugin_file: automatic_addressbook.php
-      config_file: 20_roundcube/automatic_addressbook.config-inc.php.j2
-      include_post_install: 21_custom_roundcube_automatic_addressbook.yaml
-       #====
-    - name: automatic_addressbook_ng
-      url: https://github.com/teonsystems/roundcube-plugin-automatic-addressbook-ng/archive/master.zip
-      repo_name: roundcube-plugin-automatic-addressbook-ng-master
-      plugin_file: automatic_addressbook_ng.php
-      config_file: 20_roundcube/automatic_addressbook_ng.config.php.j2
-       #====
+roundcube_github_plugins:
     - name: carddav
-#      url: https://github.com/blind-coder/rcmcarddav/releases/download/v2.0.4/carddav-2.0.4.zip
       url: https://github.com/blind-coder/rcmcarddav/releases/download/v3.0.2/carddav-3.0.2.zip
       repo_name: carddav
       plugin_file: carddav.php
-      config_file: 20_roundcube/carddav.config-inc.php.j2
-       #====
-    - name: persistent_login
-      url: https://github.com/AndresBott/persistent_login/archive/master.zip
-      repo_name: persistent_login-master
-      plugin_file: persistent_login.php
-      config_file: 20_roundcube/persistent_login.config-inc.php.j2
-      include_post_install: 21_custom_roundcube_persistent_login.yaml
-       #====
-    - name: melanie2_larry
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-Melanie2-Larry/archive/master.zip
-      repo_name: Roundcube-Plugin-Melanie2-Larry-master
-      plugin_file: melanie2_larry.php
-       #====
-    - name: mobile
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-Mobile/archive/master.zip
-      repo_name: Roundcube-Plugin-Mobile-master
-      plugin_file: mobile.php
-      enable: no
-       #====
-    - name: jquery_mobile
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-JQuery-Mobile/archive/master.zip
-      repo_name: Roundcube-Plugin-JQuery-Mobile-master
-      plugin_file: jquery_mobile.php
-      enable: no
+      config_file: carddav.config-inc.php.j2
 ```
 
 ### Validation:

@@ -101,7 +101,6 @@ letsEncryptMail: "mail@mail.com"
 run_role_pybackup: yes
 pybackup_jobs:
   - name: gitea # job name
-    backup_config_location: /vhosts/gitea/gitea.pybackup.conf.ini
     backup_dir: /vhosts/gitea/home_dir/gitea # directory that will be backed up
     follow_symlinks: yes # follows sym links when running backup
     output_dir: /vhosts/gitea/backups/
@@ -117,7 +116,27 @@ pybackup_jobs:
       day_of_month: "1"
       day_of_week: "*"
       month: "*"
-    remote: yes # perfomr a remote backup of this job when running tag: role_pybackup_remote
+    remote: yes # perform a remote backup of this job when running tag: role_pybackup_remote
+
+
+  - name: mails_localhost # job name
+    backup_dir: /vmails/maildirs/localhost # directory that will be backed up
+    follow_symlinks: yes # follows sym links when running backup
+    output_dir: /vmails/backups/localhost
+    tmp_dir: "" # relative or absolute tmp dir for backup operations
+    backup_mysql: no
+    keep_old: 1 # amount of older backups to keep
+    file_owner: root # change the ownership of the compressed backup file
+    file_mode: "0700" # change the mode of the compressed backup file
+    cron:
+      enabled: no
+      minute: "0"
+      hour: "3"
+      day_of_month: "1"
+      day_of_week: "*"
+      month: "*"
+    remote: yes # perform a remote backup of this job when running tag: role_pybackup_remote
+
 
 
 
@@ -779,6 +798,7 @@ roundcube_instances:
         - authres_status
         - automatic_addressbook_ng
         - persistent_login
+        - keyboard_shortcuts
 
 
 

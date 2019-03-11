@@ -13,6 +13,7 @@
 * `webservices_cron` - create cron entries
 ### Opendkim:
 * `role_opendkim` - Only run this role
+* `role_opendkim_keys` - print current public keys
 ### Mysql:
 * `role_mysql` - run only this role
 ### Postfix:
