@@ -27,7 +27,23 @@ You can use vault encrypted variables in your project and use a password file to
 If you have not specified a password file, use the command line parameter as 
 
     ansible-vault [encrypt | decrypt] <file> --vault-password-file="/path/to/vault_pass.txt"
-    
 
+
+
+# Recepies
+
+## phpmyadmin
+    
+use `basic_host_extra_apps_host` to install phpmyadmin
+
+    basic_host_extra_apps_host:
+    - phpmyadmin
+
+configure a virtual host according to your needs but verify: 
+- make sure it has php
+- set nginx document_root: "/usr/share/phpmyadmin/"
+- change open php open_basedir: ["/usr/share/phpmyadmin/","/usr/share/php"]
+
+    
 
 

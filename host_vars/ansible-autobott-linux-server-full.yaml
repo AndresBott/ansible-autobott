@@ -15,6 +15,11 @@ basic_host_ssh_allow_passwd_login_group:
 basic_host_ssh_sftp: yes
 # use groups definitions to configure sftp jails
 
+
+basic_host_extra_apps_host:
+- phpmyadmin
+
+
 # ========= USERS ==============
 basic_host_groups:
   - name: sftp
@@ -355,8 +360,8 @@ webservices:
           authentication_paths: no
           htpasswd_filename: no
           htpasswd_file_users:
-            - user: private
-              pass: 1234
+            - user: admin
+              pass: admin
               enabled: yes
           # letsencrypt ssl
           ssl:
@@ -652,6 +657,123 @@ webservices:
     cron_actions: []
 
 
+  - name: phpmyadmin #=================================================================
+    enabled: yes
+    uid: 1106
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+    sample_content: "php"
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: pma.localhost
+          add_fqdn_subdomain: no
+          subdomain_wildcard: no
+          template: default
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          # document root
+          document_root: "/usr/share/phpmyadmin/"
+          #authentication
+          authentication: yes
+          authentication_paths: no
+          htpasswd_filename: no
+          htpasswd_file_users:
+            - user: admin
+              pass: admin
+              enabled: yes
+          # letsencrypt ssl
+          ssl:
+            type: "force"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: yes                        # set to 'no' to don't have a php worker
+      pm: "ondemand"                      # select the process manager: static, dynamic, ondemand
+      pm_max_children: 10                 # maximum amount of child processes, this has an impact on ram
+      pm_start_servers: 2                 # amount of start child processes
+      pm_min_spare_servers: no            # lower end of child processes, only applied to "dynamic"
+      pm_max_spare_servers: no            # higher end of child processes, only applied to "dynamic"
+      pm_max_requests: 5000               # amount of requests handled by a child before killing it an spawning a new one
+      pm_process_idle_timeout: 30s        # time a child process has to be idle before being killed
+      error_reporting: 30711              # change the error log level according to php config string, set to "default" for : E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+      open_basedir:
+        - "/usr/share/phpmyadmin/"
+        - "/usr/share/php"
+        - "/etc/phpmyadmin/"
+
+    mysql:
+      enabled: no
+      db_name: "default"                  # database name, if set to "default" uses webservice name
+      collation: "default"                # define the sql collation, if set to "default" : utf8_general_ci is used
+      encoding: "default"                 # define the character encoding, "default" is: utf8
+      user: "default"                     # database user, if set to "default" uses webservice name
+      password: "changeme"                # login password
+
+    cron_actions: []
+
+
+  - name: "minio" #=================================================================
+    enabled: yes
+    uid: 1107
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: minio.localhost
+          template: proxy_minio
+          # port listen
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          server_options: # used to add extra options to teh server {... } section
+              - 'ignore_invalid_headers "off"'   # To allow special characters in headers
+              - "client_max_body_size 0"         # unlimited
+              - 'proxy_buffering "off"'          # disable buffering
+          # http proxy settings
+          proxy_port: "{{ minio_port }}"
+          proxy_lines: []
+          # logs
+          log_access: no
+          log_errors: yes
+
+          #authentication
+          authentication: yes
+          authentication_paths:
+            - "/wiki"
+          htpasswd_filename: no
+          htpasswd_file_users:
+            - user: admin
+              pass: admin
+              enabled: yes
+
+          # letsencrypt ssl
+          ssl:
+            type: "no"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: yes
+            redirect_type: 301
+
+    php:
+      enabled: no
+    mysql:
+      enabled: no
+
+    cron_actions: []
+
 
 #============================================================================================================
 # Gitea
@@ -802,6 +924,17 @@ roundcube_instances:
 
 
 
+#============================================================================================================
+# Minio
+#============================================================================================================
+run_role_minio: yes
+
+minio_uid: 1107
+minio_gid: 1107
+minio_install_client: no
+
+minio_dir: "{{webservices_root}}/minio/home_dir"
+minio_data_dir: "{{webservices_root}}/minio/home_dir/data"
 
 
 #============================================================================================================
@@ -871,44 +1004,58 @@ validation_shell_host:
 validation_http_host:
 
   - url: http://sample-wiki.localhost:9080/
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 200  # check for return code == 200
 
   # check for private wiki
   - url: http://sample-wiki.localhost:9080/api.php?action=query&list=search&srsearch=Craig%20Noone&format=xml
-    from_host: true
+    from_local_host: true
     condition:
     - header: "mediawiki_api_error"
       value: "readapidenied"
     - rc: 200
 
   - url: http://sample-wiki2.localhost:9080/
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 200
 
   - url: https://monit.localhost:9443
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 200
 
   - url: http://monit.localhost:9080
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 301
 
   - url: http://git.localhost:9080
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 200
 
   - url: http://php.localhost:9080
-    from_host: true
+    from_local_host: true
     condition:
     - rc: 301
 
   - url: https://php.localhost:9443
-    from_host: true
+    from_local_host: true
+    http_auth_user: admin
+    http_auth_password: admin
+    condition:
+    - rc: 200
+
+  - url: https://pma.localhost:9443
+    from_local_host: true
+    condition:
+    - rc: 401
+
+  - url: https://pma.localhost:9443
+    from_local_host: true
+    http_auth_user: admin
+    http_auth_password: admin
     condition:
     - rc: 200

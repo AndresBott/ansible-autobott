@@ -38,8 +38,11 @@
 * `upgrade` - perform a system upgrade
 * `action_upgrade` - perform a system upgrade, same as upgrade
 * `users` - update user definitions and credentials
+* `facts` - 
 ### Mediawiki:
 * `role_mediawiki` - Flag to only run this role
+### Minio:
+* `role_minio` - 
 ### Radicale:
 * `role_radicale` - Flag to only run this roles
 ### Composer:

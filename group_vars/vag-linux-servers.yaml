@@ -49,4 +49,4 @@ run_role_roundcube: no
 run_role_parsoid: no
 run_role_nodered: no
 run_role_radicale: no
-
+run_role_minio: no

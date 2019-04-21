@@ -13,6 +13,7 @@
 * [Dovecot](#dovecot)
 * [Basic_host](#basic_host)
 * [Mediawiki](#mediawiki)
+* [Minio](#minio)
 * [Radicale](#radicale)
 * [Composer](#composer)
 * [Gitea](#gitea)
@@ -70,7 +71,10 @@ webservices:
         - domain: demons-run.localhost    # (mandatory) domain name to listen to
           add_fqdn_subdomain: no          # if set to yes and the server FQDN is not the listen domain, then add also domain.fqdn to server listen
           subdomain_wildcard: no          # if set to yes, listen to *.domain
-          template: default               # (mandatory) use different nginx templates: default | proxy
+          template: default               # (mandatory) use different nginx templates:
+                                             default - default for php and static content
+                                             proxy - proxy template
+                                             proxy_minio - modified proxy template to allow http auth on buckets using authentication_paths without conflicting with minio auth methods
           # port listen
           port: ""                        # define listen port for http, "" for default 80
           port_ssl: ""                    # define listen port for https, "" for default 443
@@ -344,8 +348,9 @@ example:
 * `basic_host_cache_valid_time`: `3600` - change the valid cache time of apt when running ansible multiple times
 * `basic_host_installed_apps`: `[apt,ca-certificates]` - list of apps to be installed,
 * `basic_host_extra_apps`: `[]` - second list of apps that can be defined
+* `basic_host_extra_apps_host`: `[]` - third list of apps that can be defined at host level
 * `basic_host_hostname`: `""` - define the host's hostname
-* `basic_host_fqdn`: `""` - define the host's Fully qualified domain name
+* `basic_host_fqdn`: `"{{ ansible_fqdn }}"` - define the host's Fully qualified domain name
 * `basic_host_extra_host_entires`: `[]` - add extra entries to /etc/hosts
 * `basic_host_cron_notification_mail`: `""` - enable cron to send emails to that address
 * `basic_host_locale_to_be_generated`: `["en_US.UTF-8 UTF-8","es_ES.UTF-8 UTF-8"]` - list of locales to be generated (take care to use value from /usr/share/i18n/SUPPORTED,as locale-gen exit with code 0 even with errors...)
@@ -468,6 +473,17 @@ mediawiki_instances:
 * `mediawiki_VE_binary`: `"https://extdist.wmflabs.org/dist/extensions/VisualEditor-REL1_31-6854ea0.tar.gz"` - current installation source
 * `mediawiki_MFE_version`: `"REL1_31"` - current Mobile Frontend version to be installed
 * `mediawiki_MFE_binary`: `"https://extdist.wmflabs.org/dist/extensions/MobileFrontend-REL1_31-7f66849.tar.gz"` - current installation source
+
+### Minio:
+* `run_role_minio`: `yes` - Flag to disable the role
+* `minio_uid`: `no` - define a uid for the user
+* `minio_group`: `minio` - system group
+* `minio_gid`: `no` - define a gid for the group
+* `minio_bind_ip`: `"127.0.0.1"` - ip address to listen to
+* `minio_port`: `9000` - minio port
+* `minio_install_client`: `yes` - Install the minio client app
+* `minio_current_version`: `2019-03-13` - see minio_sources for available versions or provide your own
+* `minio_client_current_version`: `2019-03-13` - see minio_client_sources for available versions or provide your own
 
 ### Radicale:
 * `run_role_radicale`: `yes` - flag to disable the role
@@ -618,7 +634,7 @@ spamassasin_bayes_cron:
 * `email_db_user`: `vmail` - mysql user
 * `email_db_pass`: `"vmail"` - mysql password
 * `email_postmaster`: `"postmaster@{{ ansible_fqdn }}"` - email server postmaster emails
-* `email_server_domain`: `"mail.{{ fqdn }}"` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to. the
+* `email_server_domain`: `"mail.{{ ansible_fqdn }}"` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to. the
 * `email_debug`: `no` - add some email debug into the configuration ( don't use in production)
 * `email_cert_provider`: `""` - set to "letsencrypt" to use let's encrypt, any different string will use a self signed certificate or
 * `email_domains`: `[]` - configuration of domain names the server will handle
@@ -746,6 +762,12 @@ example:
 ```yaml
 validation_http_host:
   - url: http://google.com
+    method: "GET"                    # (optional) set the request method, if omitted GET is used
+    validate_certs: no               # (optional) set to yes to fail request on invalid ssl certificate
+    from_local_host: true            # if true, run the http request from the same machine as your ansible,
+                                       if false, run from the remote machine
+    http_auth_user: admin            # send http auth user, password is also required
+    http_auth_password: admin        # send http auth password
     condition:
     - rc: 200                        # check for return code == 200
     - rc: 302                        # check for return code == 302

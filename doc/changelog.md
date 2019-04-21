@@ -1,4 +1,17 @@
 
+2019/04/21 - Release 1.1.2
+* Added role Minio
+* Added phpmyadmin to autobott-linux-server-full
+* minor typos and fqdn changes
+
+2019/04/06 - 
+* spamlearn script now has a feature flag to do a full spam/ham learn the
+first time it is executed
+
+2019/03/11  - Release 1.1.1
+* Remove variable fqdn and replace by ansible_fqdn
+* Add new documentation parts
+* Added phpmyadmin recipe
 
 2019/03/10  - Release 1.1.0
 * Updated letsencrypt role to use certbot --nginx

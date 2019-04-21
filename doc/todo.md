@@ -16,9 +16,9 @@
 * add automatic system update with cron (basic_host)
 * delete gitea database on deactivation (gitea)
 * check if ansible with_items loop allows incremental values, in order to execute the cron at different times (spamassassin)
-* use asserts https://docs.ansible.com/ansible/latest/modules/assert_module.html (validation)
 * add validation for sftp login, private key on secret? (validation)
-* add report for password login users? - name: Validate sftp configuration (validation)
+* add report for password login users? (validation)
+* add report for lets encrypt dry-renew - name: Validate sftp configuration (validation)
 * change package behaviour similar to files with package: <status> [ present | absent | purged] (validation)
 ### Task:
 * extend the default template to allow configuration like the ones deffied in templates/parts/mediawiki.locaiton (webservices)
@@ -30,7 +30,6 @@
 ### Verify:
 * check if rather add webserive user to www-data or add www-data to webservice group (webservices)
 * check compatibility level of postfix /etc/postfix/main.cf (postfix)
-* check fqdn vs ansible_fqdn in /etc/postfix/main.cf (postfix)
 * make sure that the php worker logs are being rotated, maybe need to create a group and add the workers to the group (php-fpm)
 ### Refactor:
 * move all certbot like cron renew to this role and, (letsencrypt)
@@ -40,10 +39,11 @@
 * delete after 6 months rule (dovecot)
 ### Validation:
 * add a validation to determine if the domain is properly resolved to 127.0.0.1 ( needed for parsoid) (mediawiki)
+### Bug:
+* some file permisions are root:root after download + install, ============================================================================================================ Visual Editor / Parsoid ============================================================================================================ (mediawiki)
+* the packages validation currently performs changes, but it should only check (validation)
 ### Update:
 * update gitea binary data (gitea)
 * update roundcube to latest version (roundcube)
-### Bug:
-* the packages validation currently performs changes, but it should only check (validation)
 
 Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)
