@@ -5,4 +5,4 @@
 # (in the form of git submodules) that I use to manage and re-deploy my own servers in a reproducible way.
 #
 #============================================================================================================
-autobott_version: 1.1.2
+autobott_version: 1.1.3

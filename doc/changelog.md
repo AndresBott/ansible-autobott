@@ -1,4 +1,11 @@
 
+2019/04/21 - Release 1.1.3
+* minor fixes on basic_role
+* remove shell from vmail user
+* spamassasin learn script now invokes a shell
+* New validation section: email (send test email, check open ports)
+
+
 2019/04/21 - Release 1.1.2
 * Added role Minio
 * Added phpmyadmin to autobott-linux-server-full
