@@ -1,3 +1,7 @@
+* fixed minor issue on cron expression for spamassasin 
+* Avoid spam-learn concurrent cron execution on multiple accounts
+
+
 
 2019/04/21 - Release 1.1.3
 * minor fixes on basic_role
