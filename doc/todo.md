@@ -15,7 +15,7 @@
 * add fai2ban for postfix and imap login attempts (fail2ban)
 * add automatic system update with cron (basic_host)
 * delete gitea database on deactivation (gitea)
-* check if ansible with_items loop allows incremental values, in order to execute the cron at different times (spamassassin)
+* add email ssl server validation like: https://blogging.dragon.org.uk/testing-imap-mailserver/ -  (validation)
 * add validation for sftp login, private key on secret? (validation)
 * add report for password login users? (validation)
 * add report for lets encrypt dry-renew - name: Validate sftp configuration (validation)
@@ -41,9 +41,12 @@
 * add a validation to determine if the domain is properly resolved to 127.0.0.1 ( needed for parsoid) (mediawiki)
 ### Bug:
 * some file permisions are root:root after download + install, ============================================================================================================ Visual Editor / Parsoid ============================================================================================================ (mediawiki)
+* the server group is hardcored to "server", needs to be iterable -  (validation)
 * the packages validation currently performs changes, but it should only check (validation)
 ### Update:
 * update gitea binary data (gitea)
 * update roundcube to latest version (roundcube)
+### Deprecation:
+* remove old spamlearn actions (spamassassin)
 
 Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)

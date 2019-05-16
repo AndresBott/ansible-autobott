@@ -71,5 +71,6 @@
 * `validation_shell` - run shell validations
 * `validation_http` - run http validations
 * `validation_mysql` - run mysql validations
+* `validation_email` - 
 
 Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)

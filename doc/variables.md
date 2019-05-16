@@ -221,6 +221,8 @@ mysql_users:
 
 ### Postfix:
 * `run_role_postfix`: `yes` - flag to disable the role
+* `postfix_postgrey`: `yes` - Install and configure postgrey greylisting
+* `postfix_postgrey_port`: `10023` - Port for postgrey to listen to
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
 
 ### Node-red:

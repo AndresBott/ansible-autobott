@@ -1,3 +1,5 @@
+* fixed minor issue on dovecot for virtual dirs
+* Added postgrey feauture to postfix
 * fixed minor issue on cron expression for spamassasin 
 * Avoid spam-learn concurrent cron execution on multiple accounts
 

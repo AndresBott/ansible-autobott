@@ -8,6 +8,11 @@ you can also use "all" instead of a specific annotation.
 
 This is useful to identify duplicated tags in different roles that might be conflicting.
 
+* `validation_http` in files:
+
+        roles/validation/tasks/main.yaml (line: 81) 
+        roles/validation/tasks/main.yaml (line: 96) 
+
 * `role_dovecot` in files:
 
         roles/dovecot/tasks/main.yaml (line: 6) 
