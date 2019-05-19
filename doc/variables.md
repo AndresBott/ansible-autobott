@@ -5,6 +5,7 @@
 * [Opendkim](#opendkim)
 * [Mysql](#mysql)
 * [Postfix](#postfix)
+* [Fe26](#fe26)
 * [Node-red](#node-red)
 * [Monit](#monit)
 * [Letsencrypt](#letsencrypt)
@@ -224,6 +225,16 @@ mysql_users:
 * `postfix_postgrey`: `yes` - Install and configure postgrey greylisting
 * `postfix_postgrey_port`: `10023` - Port for postgrey to listen to
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
+
+### Fe26:
+* `run_role_fe26`: `yes` - Flag to disable the role
+* `fe26_user`: `fe26` - define a user
+* `fe26_uid`: `no` - define a uid for the user
+* `fe26_group`: `fe26` - system group
+* `fe26_gid`: `no` - define a gid for the group
+* `fe26_bind_ip`: `"127.0.0.1"` - ip address to listen to
+* `fe26_port`: `7070` - minio port
+* `fe26_current_version`: `1.0.8` - see the releases https://github.com/AndresBott/Fe26/releases
 
 ### Node-red:
 * `run_role_nodered`: `yes` - flag to disable the role
@@ -478,6 +489,7 @@ mediawiki_instances:
 
 ### Minio:
 * `run_role_minio`: `yes` - Flag to disable the role
+* `minio_disable`: `no` - disable and uninstall minio, data will be left
 * `minio_uid`: `no` - define a uid for the user
 * `minio_group`: `minio` - system group
 * `minio_gid`: `no` - define a gid for the group

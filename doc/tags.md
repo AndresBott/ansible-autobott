@@ -18,6 +18,8 @@
 * `role_mysql` - run only this role
 ### Postfix:
 * `role_postfix` - Flag to run only this role
+### Fe26:
+* `role_fe26` - 
 ### Node-red:
 * `role_nodered` - Flag to only run this roles
 ### Monit:
