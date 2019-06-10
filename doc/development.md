@@ -10,7 +10,6 @@ add a debug tastk with name if the task name starts with `[REPORT]`
     msg: " this is a custom message"
 ```
 
-
 # Git
 
 ## Change branches 
