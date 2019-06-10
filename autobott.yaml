@@ -61,7 +61,6 @@
   - fail2ban
   - monit
   - nodejs
-# @todo improvement # finally use cerbot --nginx, remove lets encrypt role
   - letsencrypt
   - pybackup
 

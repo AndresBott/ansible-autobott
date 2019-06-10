@@ -3,8 +3,12 @@
 ### Role:
 * nas storage / samba share (Playbook)
 * add a role to install java / openjdk (Playbook)
+### Task:
+* extend the default template to allow configuration like the ones deffied in templates/parts/mediawiki.locaiton (webservices)
+* add cron block, currently commented out and in sample doc (webservices)
+* create lets encrypt certificate and enable in config /etc/postfix/main.cf (postfix)
+* add parameter option to disable bayesian learning -  (spamassassin)
 ### Improvement:
-* finally use cerbot --nginx, remove lets encrypt role (Playbook)
 * add feature to keep /etc/ngins/sites-enabled clean based on webservices_exclusive_nginx config (webservices)
 * make use of option webservices_exclusive_nginx to identify and delete not used configurations (webservices)
 * if all nginx sites are disabled, add the default config (webservices)
@@ -20,11 +24,6 @@
 * add report for password login users? (validation)
 * add report for lets encrypt dry-renew - name: Validate sftp configuration (validation)
 * change package behaviour similar to files with package: <status> [ present | absent | purged] (validation)
-### Task:
-* extend the default template to allow configuration like the ones deffied in templates/parts/mediawiki.locaiton (webservices)
-* add cron block, currently commented out and in sample doc (webservices)
-* create lets encrypt certificate and enable in config /etc/postfix/main.cf (postfix)
-* add parameter option to disable bayesian learning -  (spamassassin)
 ### Check:
 * htpasswd_filename generation (webservices)
 ### Verify:
