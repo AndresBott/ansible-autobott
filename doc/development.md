@@ -18,7 +18,7 @@ add a debug tastk with name if the task name starts with `[REPORT]`
 git submodule foreach fetch
 
 # change branch
-git submodule foreach branch [master|dev] 
+git submodule foreach git checkout [master|dev] 
 
 # merge squash
 git submodule foreach git merge [master|dev] --squash
