@@ -10,6 +10,7 @@
 * add parameter option to disable bayesian learning -  (spamassassin)
 ### Improvement:
 * add feature to keep /etc/ngins/sites-enabled clean based on webservices_exclusive_nginx config (webservices)
+* add sub_template to nginx in order to load application specific location rules, i.e roundcube block /cache (webservices)
 * make use of option webservices_exclusive_nginx to identify and delete not used configurations (webservices)
 * if all nginx sites are disabled, add the default config (webservices)
 * Delete ( maybe even revoke) let's encrypt certifiactes if no longer in use (webservices)
@@ -29,6 +30,7 @@
 ### Verify:
 * check if rather add webserive user to www-data or add www-data to webservice group (webservices)
 * check compatibility level of postfix /etc/postfix/main.cf (postfix)
+* check if letsencrypt certificate domains are correctly defined, k9 mail seems to fail (postfix)
 * make sure that the php worker logs are being rotated, maybe need to create a group and add the workers to the group (php-fpm)
 ### Refactor:
 * move all certbot like cron renew to this role and, (letsencrypt)

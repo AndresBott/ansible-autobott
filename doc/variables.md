@@ -15,6 +15,7 @@
 * [Basic_host](#basic_host)
 * [Mediawiki](#mediawiki)
 * [Minio](#minio)
+* [Videoconv](#videoconv)
 * [Radicale](#radicale)
 * [Composer](#composer)
 * [Gitea](#gitea)
@@ -222,8 +223,9 @@ mysql_users:
 
 ### Postfix:
 * `run_role_postfix`: `yes` - flag to disable the role
-* `postfix_postgrey`: `yes` - Install and configure postgrey greylisting
+* `postfix_postgrey`: `no` - Install and configure postgrey greylisting
 * `postfix_postgrey_port`: `10023` - Port for postgrey to listen to
+* `postfix_postgrey_delay`: `60` - the graylisting delay in seconds
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
 
 ### Fe26:
@@ -332,6 +334,8 @@ pybackup_jobs:
 
 ### Fail2ban:
 * `run_role_fail2ban`: `yes` - 
+* `fail2ban_postfix`: `no` - enable postfix fail2ban rules
+* `fail2ban_nginx_http_auth`: `no` - enable nginx http auth rules
 
 ### Dovecot:
 * `run_role_dovecot`: `yes` - flag to disable the role
@@ -437,6 +441,21 @@ basic_host_users:
 ```
 * `basic_host_users_extra`: `[]` - second list of users to be added, this allows to define users at different locations
 * `basic_host_users_deleted`: `[]` - list of users + user groups to NOT to be present. WARNING this will not delete their home
+* `basic_host_smb`: `no` - set to yes to install smb client, tools and configure mounting points
+* `basic_host_smb_mounts`: `no` - set to yes to install smb client, tools and configure mounting points
+example: 
+
+
+```yaml
+basic_host_smb_mounts:
+  - name: data1
+    host: //SERVER/Data
+    mount: /home/user/mount
+    user: user
+    group: group
+    pass: pass
+    mount_options: ""
+```
 
 ### Mediawiki:
 * `run_role_mediawiki`: `yes` - flag used to disable this role
@@ -498,6 +517,14 @@ mediawiki_instances:
 * `minio_install_client`: `yes` - Install the minio client app
 * `minio_current_version`: `2019-03-13` - see minio_sources for available versions or provide your own
 * `minio_client_current_version`: `2019-03-13` - see minio_client_sources for available versions or provide your own
+
+### Videoconv:
+* `run_role_videoconv`: `yes` - Flag to disable the role
+* `videoconv_user`: `videoconv` - define a user
+* `videoconv_uid`: `no` - define a uid for the user
+* `videoconv_group`: `videoconv` - system group
+* `videoconv_gid`: `no` - define a gid for the group
+* `videoconv_binary`: `0.1` - see the releases https://github.com/AndresBott/videoconv/releases
 
 ### Radicale:
 * `run_role_radicale`: `yes` - flag to disable the role

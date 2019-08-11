@@ -41,10 +41,13 @@
 * `action_upgrade` - perform a system upgrade, same as upgrade
 * `users` - update user definitions and credentials
 * `facts` - 
+* `samba` - 
 ### Mediawiki:
 * `role_mediawiki` - Flag to only run this role
 ### Minio:
 * `role_minio` - 
+### Videoconv:
+* `role_videoconv` - 
 ### Radicale:
 * `role_radicale` - Flag to only run this roles
 ### Composer:

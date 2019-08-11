@@ -76,3 +76,6 @@
 [submodule "roles/fe26"]
 	path = roles/fe26
 	url = git@github.com:AndresBott/ansible-role-fe26.git
+[submodule "roles/videoconv"]
+	path = roles/videoconv
+	url = git@github.com:AndresBott/ansible-role-videoconv.git

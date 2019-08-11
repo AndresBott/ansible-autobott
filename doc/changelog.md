@@ -1,16 +1,20 @@
+
+2019/08/11 - Release 1.1.5
+* added samba mounts to role basic host 
+* improved spamassasing
+* disabled greylist as default
+
+2019/04/21 - Release 1.1.4
 * fixed minor issue on dovecot for virtual dirs
 * Added postgrey feauture to postfix
 * fixed minor issue on cron expression for spamassasin 
 * Avoid spam-learn concurrent cron execution on multiple accounts
-
-
 
 2019/04/21 - Release 1.1.3
 * minor fixes on basic_role
 * remove shell from vmail user
 * spamassasin learn script now invokes a shell
 * New validation section: email (send test email, check open ports)
-
 
 2019/04/21 - Release 1.1.2
 * Added role Minio
