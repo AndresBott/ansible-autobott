@@ -70,3 +70,12 @@
 [submodule "plugins/callback-detailed"]
 	path = plugins/callback-detailed
 	url = https://github.com/AndresBott/ansible-callback-detailed.git
+[submodule "roles/minio"]
+	path = roles/minio
+	url = https://github.com/AndresBott/ansible-role-minio.git
+[submodule "roles/fe26"]
+	path = roles/fe26
+	url = git@github.com:AndresBott/ansible-role-fe26.git
+[submodule "roles/videoconv"]
+	path = roles/videoconv
+	url = git@github.com:AndresBott/ansible-role-videoconv.git

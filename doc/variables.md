@@ -5,13 +5,17 @@
 * [Opendkim](#opendkim)
 * [Mysql](#mysql)
 * [Postfix](#postfix)
+* [Fe26](#fe26)
 * [Node-red](#node-red)
 * [Monit](#monit)
+* [Letsencrypt](#letsencrypt)
 * [Pybackup](#pybackup)
 * [Fail2ban](#fail2ban)
 * [Dovecot](#dovecot)
 * [Basic_host](#basic_host)
 * [Mediawiki](#mediawiki)
+* [Minio](#minio)
+* [Videoconv](#videoconv)
 * [Radicale](#radicale)
 * [Composer](#composer)
 * [Gitea](#gitea)
@@ -69,7 +73,10 @@ webservices:
         - domain: demons-run.localhost    # (mandatory) domain name to listen to
           add_fqdn_subdomain: no          # if set to yes and the server FQDN is not the listen domain, then add also domain.fqdn to server listen
           subdomain_wildcard: no          # if set to yes, listen to *.domain
-          template: default               # (mandatory) use different nginx templates: default | proxy
+          template: default               # (mandatory) use different nginx templates:
+                                             default - default for php and static content
+                                             proxy - proxy template
+                                             proxy_minio - modified proxy template to allow http auth on buckets using authentication_paths without conflicting with minio auth methods
           # port listen
           port: ""                        # define listen port for http, "" for default 80
           port_ssl: ""                    # define listen port for https, "" for default 443
@@ -216,12 +223,20 @@ mysql_users:
 
 ### Postfix:
 * `run_role_postfix`: `yes` - flag to disable the role
-* `postfix_db_name`: `vmail` - mysql database name
-* `postfix_db_host`: `127.0.0.1` - mysql database host/ip
-* `postfix_db_user`: `vmail` - mysql user
-* `postfix_db_pass`: `"vmail"` - mysql password
-* `postfix_data_dir`: `/vmails` - data directory that is shared between dovecot and postfix
+* `postfix_postgrey`: `no` - Install and configure postgrey greylisting
+* `postfix_postgrey_port`: `10023` - Port for postgrey to listen to
+* `postfix_postgrey_delay`: `60` - the graylisting delay in seconds
 * `postfix_max_mail_size`: `10240000` - The maximal size in bytes of a message, including envelope information.
+
+### Fe26:
+* `run_role_fe26`: `yes` - Flag to disable the role
+* `fe26_user`: `fe26` - define a user
+* `fe26_uid`: `no` - define a uid for the user
+* `fe26_group`: `fe26` - system group
+* `fe26_gid`: `no` - define a gid for the group
+* `fe26_bind_ip`: `"127.0.0.1"` - ip address to listen to
+* `fe26_port`: `7070` - minio port
+* `fe26_current_version`: `1.0.8` - see the releases https://github.com/AndresBott/Fe26/releases
 
 ### Node-red:
 * `run_role_nodered`: `yes` - flag to disable the role
@@ -274,6 +289,17 @@ monit_checks: []
     additional_raw: "" #see samples in /etc/monit/conf-available
 ```
 
+### Letsencrypt:
+* `run_role_letsencrypt`: `yes` - flag to disable the role
+* `letsencrypt_renew_hooks`: `[]` - list of hooks to add to cron after a certificate has been renewed
+example: 
+
+
+```yaml
+letsencrypt_renew_hooks:
+ - "nginx -t -q && nginx -s reload"
+```
+* `letsencrypt_renew_email`: `""` - provide an email address to send an email notification of certificate renewal
 
 ### Pybackup:
 * `run_role_pybackup`: `yes` - flag to run this role
@@ -308,12 +334,22 @@ pybackup_jobs:
 
 ### Fail2ban:
 * `run_role_fail2ban`: `yes` - 
+* `fail2ban_postfix`: `no` - enable postfix fail2ban rules
+* `fail2ban_nginx_http_auth`: `no` - enable nginx http auth rules
 
 ### Dovecot:
 * `run_role_dovecot`: `yes` - flag to disable the role
 * `dovecot_quota_enabled`: `yes` - enable dovecot quotas
 * `dovecot_virtual_folders`: `[ 'All Mails', 'Flagged' ]` - enable custom virtual folders by providing an array of filters, current values: ['All Mails', 'Flagged']; set to no to disable
-* `dovecot_postmaster_email`: `""` - define the default postmaster (server owner) email address for this server
+* `dovecot_mailbox_spam_expurge`: `60d` - after how many days emails in the spam folder will be deleted
+* `dovecot_mailbox_autoexpunge`: `[]` - a set of mailboxes with different expunge values (delete after x days)
+example: 
+
+
+```yaml
+- name: Guardar6meses
+    days: 180
+```
 
 ### Basic_host:
 * `basic_host_user`: `ans` - username for ansible login user
@@ -329,8 +365,9 @@ pybackup_jobs:
 * `basic_host_cache_valid_time`: `3600` - change the valid cache time of apt when running ansible multiple times
 * `basic_host_installed_apps`: `[apt,ca-certificates]` - list of apps to be installed,
 * `basic_host_extra_apps`: `[]` - second list of apps that can be defined
+* `basic_host_extra_apps_host`: `[]` - third list of apps that can be defined at host level
 * `basic_host_hostname`: `""` - define the host's hostname
-* `basic_host_fqdn`: `""` - define the host's Fully qualified domain name
+* `basic_host_fqdn`: `"{{ ansible_fqdn }}"` - define the host's Fully qualified domain name
 * `basic_host_extra_host_entires`: `[]` - add extra entries to /etc/hosts
 * `basic_host_cron_notification_mail`: `""` - enable cron to send emails to that address
 * `basic_host_locale_to_be_generated`: `["en_US.UTF-8 UTF-8","es_ES.UTF-8 UTF-8"]` - list of locales to be generated (take care to use value from /usr/share/i18n/SUPPORTED,as locale-gen exit with code 0 even with errors...)
@@ -404,6 +441,21 @@ basic_host_users:
 ```
 * `basic_host_users_extra`: `[]` - second list of users to be added, this allows to define users at different locations
 * `basic_host_users_deleted`: `[]` - list of users + user groups to NOT to be present. WARNING this will not delete their home
+* `basic_host_smb`: `no` - set to yes to install smb client, tools and configure mounting points
+* `basic_host_smb_mounts`: `no` - set to yes to install smb client, tools and configure mounting points
+example: 
+
+
+```yaml
+basic_host_smb_mounts:
+  - name: data1
+    host: //SERVER/Data
+    mount: /home/user/mount
+    user: user
+    group: group
+    pass: pass
+    mount_options: ""
+```
 
 ### Mediawiki:
 * `run_role_mediawiki`: `yes` - flag used to disable this role
@@ -453,6 +505,26 @@ mediawiki_instances:
 * `mediawiki_VE_binary`: `"https://extdist.wmflabs.org/dist/extensions/VisualEditor-REL1_31-6854ea0.tar.gz"` - current installation source
 * `mediawiki_MFE_version`: `"REL1_31"` - current Mobile Frontend version to be installed
 * `mediawiki_MFE_binary`: `"https://extdist.wmflabs.org/dist/extensions/MobileFrontend-REL1_31-7f66849.tar.gz"` - current installation source
+
+### Minio:
+* `run_role_minio`: `yes` - Flag to disable the role
+* `minio_disable`: `no` - disable and uninstall minio, data will be left
+* `minio_uid`: `no` - define a uid for the user
+* `minio_group`: `minio` - system group
+* `minio_gid`: `no` - define a gid for the group
+* `minio_bind_ip`: `"127.0.0.1"` - ip address to listen to
+* `minio_port`: `9000` - minio port
+* `minio_install_client`: `yes` - Install the minio client app
+* `minio_current_version`: `2019-03-13` - see minio_sources for available versions or provide your own
+* `minio_client_current_version`: `2019-03-13` - see minio_client_sources for available versions or provide your own
+
+### Videoconv:
+* `run_role_videoconv`: `yes` - Flag to disable the role
+* `videoconv_user`: `videoconv` - define a user
+* `videoconv_uid`: `no` - define a uid for the user
+* `videoconv_group`: `videoconv` - system group
+* `videoconv_gid`: `no` - define a gid for the group
+* `videoconv_binary`: `0.1` - see the releases https://github.com/AndresBott/videoconv/releases
 
 ### Radicale:
 * `run_role_radicale`: `yes` - flag to disable the role
@@ -535,6 +607,24 @@ spamassasin_scores:
   DKIM_SIGNED: 1.0
   DKIM_VALID: -1.5
 ```
+* `spamassasin_whitelist_patterns`: `[]` - use white list patterns like: "friend@somewhere.com", "*@isp.com", or "*.domain.net", make sure that they have valid dkim and spf entries
+example: 
+
+
+```yaml
+spamassasin_whitelist_patterns:
+  - "*@austrialpin.at"
+  - "*@*.example.com"
+```
+* `spamassasin_bayes_coron`: `{hour:4,minute:0}` - specify when sa learn will run
+example: 
+
+
+```yaml
+spamassasin_bayes_cron:
+  hour: 4
+  minute: 0
+```
 
 ### Php-fpm:
 * `run_role_php_fpm`: `yes` - flag to run the role php-fpm, set to no to uninstall php
@@ -585,8 +675,7 @@ spamassasin_scores:
 * `email_db_user`: `vmail` - mysql user
 * `email_db_pass`: `"vmail"` - mysql password
 * `email_postmaster`: `"postmaster@{{ ansible_fqdn }}"` - email server postmaster emails
-* `email_server_domain`: `mail.localhost` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to.
-* `email_subdomain`: `mail` - subdomain part of the domain
+* `email_server_domain`: `"mail.{{ ansible_fqdn }}"` - email server main domain, the server can handle multiple domain email addresses but needs one primary domain for the clients to connect to. the
 * `email_debug`: `no` - add some email debug into the configuration ( don't use in production)
 * `email_cert_provider`: `""` - set to "letsencrypt" to use let's encrypt, any different string will use a self signed certificate or
 * `email_domains`: `[]` - configuration of domain names the server will handle
@@ -633,7 +722,7 @@ example:
 
 ```yaml
 roundcube_instances:
-  - name: webmail                                 # used to identify the different wiki installations
+  - name: webmail                                 # used to identify the different roundcube installations
     user: roundcube                               # system user to be used
     group: roundcube                              # system group to be used
     db_name: roundcube                            # database name
@@ -645,9 +734,9 @@ roundcube_instances:
     config:
       ignore_certificate_validation: yes           # this is needed for simple self signed certificates, and should no be used in production
       mail_server: "mail.localhost"
-      cypher: "Quaba75eesdahfoh2eizay8i"           # excatly 24 chars
+      cypher: "Quaba75eesdahfoh2eizay8i"           # exactly 24 chars
       plugins: []                                  # see <installdir>/plugins, these are provided with roundcube
-      manual_plugins: []
+      github_plugins: []         # select from predefined plugins to be installed from github, see variable roundcube_github_plugins
 ```
 * `roundcube_current_version`: `1.3.3` - roundcube version to install
 * `roundcube_sources`: `` - roundcube installation candidates, this can be changed per configuration
@@ -665,62 +754,12 @@ example:
 
 
 ```yaml
-roundcube_manual_plugins:
-    - name: gravatar
-      url: https://github.com/prodrigestivill/roundcube-gravatar/archive/master.zip
-      repo_name: roundcube-gravatar-master
-      plugin_file: gravatar.php
-      config_file: 20_roundcube/gravatar.config-inc.php.j2
-       #====
-    - name: authres_status
-      url: https://github.com/pimlie/authres_status/archive/master.zip
-      repo_name: authres_status-master
-      plugin_file: authres_status.php
-      config_file: 20_roundcube/authres_status.config-inc.php.j2
-       #====
-    - name: automatic_addressbook
-      url: https://github.com/sblaisot/automatic_addressbook/archive/master.zip
-      repo_name: automatic_addressbook-master
-      plugin_file: automatic_addressbook.php
-      config_file: 20_roundcube/automatic_addressbook.config-inc.php.j2
-      include_post_install: 21_custom_roundcube_automatic_addressbook.yaml
-       #====
-    - name: automatic_addressbook_ng
-      url: https://github.com/teonsystems/roundcube-plugin-automatic-addressbook-ng/archive/master.zip
-      repo_name: roundcube-plugin-automatic-addressbook-ng-master
-      plugin_file: automatic_addressbook_ng.php
-      config_file: 20_roundcube/automatic_addressbook_ng.config.php.j2
-       #====
+roundcube_github_plugins:
     - name: carddav
-#      url: https://github.com/blind-coder/rcmcarddav/releases/download/v2.0.4/carddav-2.0.4.zip
       url: https://github.com/blind-coder/rcmcarddav/releases/download/v3.0.2/carddav-3.0.2.zip
       repo_name: carddav
       plugin_file: carddav.php
-      config_file: 20_roundcube/carddav.config-inc.php.j2
-       #====
-    - name: persistent_login
-      url: https://github.com/AndresBott/persistent_login/archive/master.zip
-      repo_name: persistent_login-master
-      plugin_file: persistent_login.php
-      config_file: 20_roundcube/persistent_login.config-inc.php.j2
-      include_post_install: 21_custom_roundcube_persistent_login.yaml
-       #====
-    - name: melanie2_larry
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-Melanie2-Larry/archive/master.zip
-      repo_name: Roundcube-Plugin-Melanie2-Larry-master
-      plugin_file: melanie2_larry.php
-       #====
-    - name: mobile
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-Mobile/archive/master.zip
-      repo_name: Roundcube-Plugin-Mobile-master
-      plugin_file: mobile.php
-      enable: no
-       #====
-    - name: jquery_mobile
-      url: https://github.com/messagerie-melanie2/Roundcube-Plugin-JQuery-Mobile/archive/master.zip
-      repo_name: Roundcube-Plugin-JQuery-Mobile-master
-      plugin_file: jquery_mobile.php
-      enable: no
+      config_file: carddav.config-inc.php.j2
 ```
 
 ### Validation:
@@ -764,6 +803,12 @@ example:
 ```yaml
 validation_http_host:
   - url: http://google.com
+    method: "GET"                    # (optional) set the request method, if omitted GET is used
+    validate_certs: no               # (optional) set to yes to fail request on invalid ssl certificate
+    from_local_host: true            # if true, run the http request from the same machine as your ansible,
+                                       if false, run from the remote machine
+    http_auth_user: admin            # send http auth user, password is also required
+    http_auth_password: admin        # send http auth password
     condition:
     - rc: 200                        # check for return code == 200
     - rc: 302                        # check for return code == 302

@@ -32,10 +32,29 @@
       tags:
         - always
 
+    - name: clean old autobott_info.yaml files
+      file:
+        state: absent
+        path: "{{ item }}"
+      with_items:
+        - /root/autobott_info.yaml
+      tags:
+        - always
+
+    - name: Ensures /etc/autobott/ dir exists
+      file:
+        path: /etc/autobott/
+        state: directory
+        owner: root
+        group: root
+        mode: 0600
+      tags:
+        - always
+
     - name: Update ansible metadata on client
       template:
         src: autobott_info.j2
-        dest: "/root/autobott_info.yaml"
+        dest: "/etc/autobott/autobott_info.yaml"
         owner: root
         group: root
         mode: 0600
@@ -63,6 +82,7 @@
   - nodejs
   - letsencrypt
   - pybackup
+  - videoconv
 
 #============================================================================================================
 # Web Servers
@@ -76,15 +96,19 @@
   - php-fpm
   - mysql
   - webservices
+
   # extras - php based
   - composer
   - mediawiki
   - roundcube
+  
   # extras - proxy
   - gitea
   - parsoid
   - node-red
   - radicale
+  - minio
+  - fe26
 
 #============================================================================================================
 # Mail Servers

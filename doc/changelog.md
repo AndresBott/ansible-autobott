@@ -1,4 +1,52 @@
 
+2019/08/12 - Release 1.1.6
+* Small corrections
+
+2019/08/11 - Release 1.1.5
+* added samba mounts to role basic host 
+* improved spamassasing
+* disabled greylist as default
+
+2019/04/21 - Release 1.1.4
+* fixed minor issue on dovecot for virtual dirs
+* Added postgrey feauture to postfix
+* fixed minor issue on cron expression for spamassasin 
+* Avoid spam-learn concurrent cron execution on multiple accounts
+
+2019/04/21 - Release 1.1.3
+* minor fixes on basic_role
+* remove shell from vmail user
+* spamassasin learn script now invokes a shell
+* New validation section: email (send test email, check open ports)
+
+2019/04/21 - Release 1.1.2
+* Added role Minio
+* Added phpmyadmin to autobott-linux-server-full
+* minor typos and fqdn changes
+
+2019/04/06 - 
+* spamlearn script now has a feature flag to do a full spam/ham learn the
+first time it is executed
+
+2019/03/11  - Release 1.1.1
+* Remove variable fqdn and replace by ansible_fqdn
+* Add new documentation parts
+* Added phpmyadmin recipe
+
+2019/03/10  - Release 1.1.0
+* Updated letsencrypt role to use certbot --nginx
+* moved letsencrypt cron renew code from webservices role to letsencrypt role
+* Improvement in opendkim: report the current public keys in the cli
+
+2019/03/09 - Release 1.0.1
+* Roundcube now installs plugins from github
+* Minor typos corrected
+* Radicale now allows to create users with id and groups with gid
+* improve utils/generate_documentation,sh
+
+2019/03/01 - Release 1.0 
+* Refactoring complete 
+* Published 25 repositories to github
 
 2019/01/10 
 * New year, new project! 

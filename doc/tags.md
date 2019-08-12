@@ -13,10 +13,13 @@
 * `webservices_cron` - create cron entries
 ### Opendkim:
 * `role_opendkim` - Only run this role
+* `role_opendkim_keys` - print current public keys
 ### Mysql:
 * `role_mysql` - run only this role
 ### Postfix:
 * `role_postfix` - Flag to run only this role
+### Fe26:
+* `role_fe26` - 
 ### Node-red:
 * `role_nodered` - Flag to only run this roles
 ### Monit:
@@ -37,8 +40,14 @@
 * `upgrade` - perform a system upgrade
 * `action_upgrade` - perform a system upgrade, same as upgrade
 * `users` - update user definitions and credentials
+* `facts` - 
+* `samba` - 
 ### Mediawiki:
 * `role_mediawiki` - Flag to only run this role
+### Minio:
+* `role_minio` - 
+### Videoconv:
+* `role_videoconv` - 
 ### Radicale:
 * `role_radicale` - Flag to only run this roles
 ### Composer:
@@ -67,5 +76,6 @@
 * `validation_shell` - run shell validations
 * `validation_http` - run http validations
 * `validation_mysql` - run mysql validations
+* `validation_email` - 
 
 Documentation generated using: [Ansible-autodoc](https://github.com/AndresBott/ansible-autodoc)
