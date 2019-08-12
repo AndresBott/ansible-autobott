@@ -25,5 +25,6 @@ git submodule foreach git merge [master|dev] --squash
 
 # commit the squashed changes
 git submodule foreach git commit -m "merge branch dev for release xxx" 
+git submodule foreach git commit --allow-empty -m "Release 1.1.6"
 
 ```` 
