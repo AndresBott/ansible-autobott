@@ -774,6 +774,55 @@ webservices:
 
     cron_actions: []
 
+  - name: fe26 #=================================================================
+    enabled: yes
+    uid: 1108
+    shell: "/bin/false"
+    ssh_key: []
+    groups: []
+    password: ""
+
+    nginx:
+      enabled: yes
+      servers:
+        - domain: fe26.localhost
+          template: proxy
+          port: 9080
+          port_ssl: 9443
+          default_server: no
+          server_options: # used to add extra options to teh server {... } section
+            - 'ignore_invalid_headers "off"'   # To allow special characters in headers
+            - "client_max_body_size 0"         # unlimited
+            - 'proxy_buffering "off"'          # disable buffering
+          # http proxy settings
+          proxy_port: "{{ fe26_port }}"
+          proxy_lines: []
+
+          #authentication
+          authentication: no
+          htpasswd_filename: no
+          htpasswd_file_users:
+            - user: admin
+              pass: admin
+              enabled: yes
+          # letsencrypt ssl
+          ssl:
+            type: "no"
+            provider: "selfsigned"
+            letsencrypt_notifications_email: ""
+            staging: no
+            redirect_type: 301
+
+    php:
+      enabled: no
+    mysql:
+      enabled: no
+
+    cron_actions: []
+
+
+
+
 
 #============================================================================================================
 # Gitea
@@ -936,6 +985,17 @@ minio_install_client: no
 minio_dir: "{{webservices_root}}/minio/home_dir"
 minio_data_dir: "{{webservices_root}}/minio/home_dir/data"
 
+#============================================================================================================
+# Fe26
+#============================================================================================================
+run_role_fe26: yes
+
+fe26_uid: 1108
+fe26_gid: 1108
+
+fe26_dir: "{{webservices_root}}/fe26/home_dir"
+fe26_data_dir: "{{webservices_root}}/fe26/home_dir/data"
+
 
 #============================================================================================================
 # Email
@@ -1059,3 +1119,16 @@ validation_http_host:
     http_auth_password: admin
     condition:
     - rc: 200
+
+  # fe26 #================================================================
+
+  - url: http://fe26.localhost:9080
+    from_local_host: true
+    condition:
+      - rc: 301
+
+  - url: http://fe26.localhost:9080/fe26
+    from_local_host: true
+    validate_certs: yes
+    condition:
+      - rc: 200

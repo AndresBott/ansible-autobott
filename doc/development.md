@@ -15,7 +15,7 @@ add a debug tastk with name if the task name starts with `[REPORT]`
 ## Change branches 
 
 ````bash
-git submodule foreach fetch
+git submodule foreach git fetch
 
 # change branch
 git submodule foreach git checkout [master|dev] 

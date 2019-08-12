@@ -96,12 +96,12 @@
   - php-fpm
   - mysql
   - webservices
-  -
+
   # extras - php based
   - composer
   - mediawiki
   - roundcube
-  -
+  
   # extras - proxy
   - gitea
   - parsoid

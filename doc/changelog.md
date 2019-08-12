@@ -1,4 +1,7 @@
 
+2019/08/12 - Release 1.1.6
+* Small corrections
+
 2019/08/11 - Release 1.1.5
 * added samba mounts to role basic host 
 * improved spamassasing
