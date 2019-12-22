@@ -1,0 +1,167 @@
+---
+#============================================================================================================
+# Mysql
+#============================================================================================================
+# @var run_role_mysql: yes # flag to run this role
+run_role_mysql: yes
+
+# @var: mysql_daemon: mysql # name of the mysql deamon, default value depends on OS
+# mysql_daemon: mysql
+
+# @var: mysql_packages: [] # packages to be installed, default value depends on OS
+#mysql_packages: # value depends on OS
+#  - mariadb-common
+#  - mariadb-server
+
+# @var: mysql_config_file: /etc/mysql/my.cnf # Main configuration file, value depends on OS
+#mysql_config_file: /etc/mysql/my.cnf # value depends on OS
+
+# @var mysql_root_username: root # The default root user installed by mysql - almost always root
+mysql_root_username: root
+# @var mysql_root_home: /root # home of root user
+mysql_root_home: /root
+# @var mysql_root_password: "" # myqsl root  password
+mysql_root_password: "root"
+
+
+
+
+
+#============================================================================================================
+# mysqld - daemon settings
+#============================================================================================================
+
+# @var mysql_port: "3306" # port where mysqld is listening
+mysql_port: "3306"
+# @var mysql_bind_address: '127.0.0.1' # ip addresses mysqld is listening
+mysql_bind_address: '127.0.0.1'
+# @var mysql_skip_name_resolve: no # if turned on, domain names will not be resolved i.e grants need to be done based on ip, increases performance
+mysql_skip_name_resolve: no
+# @var mysql_datadir: /var/lib/mysql # location of the data of mysql, if you change might not work due to apparmor and similar
+mysql_datadir: /var/lib/mysql
+# @var mysql_socket: /var/run/mysqld/mysqld.sock # location of the unix socket, default value depends on OS
+#mysql_socket: /var/run/mysqld/mysqld.sock
+# @var mysql_pid_file: /var/run/mysqld/mysqld.pid # location of the PID file, default value depends on OS
+# mysql_pid_file: /var/run/mysqld/mysqld.pid
+
+#########################################################
+#  Logging
+#########################################################
+
+# @var mysql_general_log: "" # mysql log output file location i.e /var/log/mysql/mysql.log OR if set to 'syslog' it will log to syslog with the tag defined in mysql_syslog_tag, set to empty string to disable.
+mysql_general_log: ""
+
+# @var mysql_error_log: /var/log/mysql/error.log # mysql error log output file location OR if set to 'syslog' it will log to syslog with the tag defined in mysql_syslog_tag, set to empty string to disable, default value depends on OS
+# mysql_error_log: /var/log/mysql/error.log
+
+# @var mysql_syslog_tag: mysql # if logging to syslog, this tag is used
+mysql_syslog_tag: mysql
+# @var mysql_slow_query_log_enabled: no # enable logging for slow queries
+mysql_slow_query_log_enabled: no
+# @var mysql_slow_query_time: 5 # log queries that take longer than X seconds
+mysql_slow_query_time: 5
+# @var mysql_slow_query_log_file: /var/log/mysql-slow-query.log # logfile for slow queries, default value depends on OS
+# mysql_slow_query_log_file: /var/log/mysql-slow-query.log
+
+#########################################################
+# Memory settings (default values optimized ~512MB RAM).
+#########################################################
+# @var mysql_key_buffer_size: "256M" # memory optimization value
+mysql_key_buffer_size: "256M"
+# @var mysql_max_allowed_packet: "64M" # memory optimization value
+mysql_max_allowed_packet: "64M"
+# @var mysql_table_open_cache: "256" # memory optimization value
+mysql_table_open_cache: "256"
+# @var mysql_sort_buffer_size: "1M" # memory optimization value
+mysql_sort_buffer_size: "1M"
+# @var mysql_read_buffer_size: "1M" # memory optimization value
+mysql_read_buffer_size: "1M"
+# @var mysql_read_rnd_buffer_size: "4M" # memory optimization value
+mysql_read_rnd_buffer_size: "4M"
+# @var mysql_myisam_sort_buffer_size: "64M" # memory optimization value
+mysql_myisam_sort_buffer_size: "64M"
+
+# @var mysql_max_connections: "151" # memory optimization value
+mysql_max_connections: "151"
+# @var mysql_tmp_table_size: "16M"  # memory optimization value
+mysql_tmp_table_size: "16M"
+# @var mysql_max_heap_table_size: "16M" # memory optimization value
+mysql_max_heap_table_size: "16M"
+
+# @var mysql_query_cache_size: "16M" # memory optimization value
+mysql_query_cache_size: "16M"
+# @var mysql_query_cache_limit: "1M" # memory optimization value
+mysql_query_cache_limit: "1M"
+
+# @var mysql_thread_cache_size: "8" # memory optimization value
+mysql_thread_cache_size: "8"
+
+# Other settings.
+
+# @var mysql_wait_timeout: "28800" # The number of seconds the server waits for activity on a noninteractive connection before closing it.
+mysql_wait_timeout: "28800"
+# @var mysql_lower_case_table_names: 0 # If set to 1, table names are stored in lowercase, if set to 0 table names are case-sensitive.
+mysql_lower_case_table_names: 0
+
+#########################################################
+# InnoDB settings.
+#########################################################
+
+# @var mysql_supports_innodb_large_prefix: true # require MySQL > 5.5. value defined depending on OS
+# @var mysql_innodb_large_prefix: "1" # enable innodb_large_prefix
+mysql_innodb_large_prefix: "1"
+# @var mysql_innodb_file_format: "barracuda" # set the innodb_file_format
+mysql_innodb_file_format: "barracuda"
+
+# @var mysql_innodb_file_per_table: "1" #
+mysql_innodb_file_per_table: "1"
+# @var mysql_innodb_buffer_pool_size: "256M" # Set up to 80% of RAM but beware of setting too high.
+mysql_innodb_buffer_pool_size: "256M"
+# @var mysql_innodb_log_file_size: "64M" # Set to 25% of buffer pool size.
+mysql_innodb_log_file_size: "64M"
+# @var mysql_innodb_log_buffer_size: "8M" #
+mysql_innodb_log_buffer_size: "8M"
+# @var mysql_innodb_flush_log_at_trx_commit: "1" #
+mysql_innodb_flush_log_at_trx_commit: "1"
+# @var mysql_innodb_lock_wait_timeout: "50" #
+mysql_innodb_lock_wait_timeout: "50"
+
+#============================================================================================================
+# mysqldump
+#============================================================================================================
+
+# @var mysql_mysqldump_max_allowed_packet: "64M" # Maximum packet length to send to or receive from server
+mysql_mysqldump_max_allowed_packet: "64M"
+
+#============================================================================================================
+# Content
+#============================================================================================================
+
+# @var mysql_databases: [] # Ensure mysql databases exist
+mysql_databases: []
+# @example #
+#mysql_databases:
+#  - name: example
+#    collation: utf8_general_ci
+#    encoding: utf8
+
+# @var mysql_users: []  # Ensure mysql users
+mysql_users: []
+# @example #
+#mysql_users:
+#  - name: example
+#    host: 127.0.0.1
+#    password: secret
+#    priv: *.*:USAGE
+
+
+
+
+
+
+
+
+
+
+
+

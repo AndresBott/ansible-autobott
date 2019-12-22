@@ -1,0 +1,21 @@
+[Unit]
+Description=Minio storage service
+After=syslog.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ minio_user }}
+ExecStart={{ minio_dir }}/minio-binaries/minio-latest server --address {{ minio_bind_ip }}:{{ minio_port }} {{ minio_data_dir }}
+Restart=on-failure
+WorkingDirectory={{ minio_dir }}
+Environment="MINIO_ACCESS_KEY={{ minio_access_key }}"
+Environment="MINIO_SECRET_KEY={{ minio_secret_key }}"
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+

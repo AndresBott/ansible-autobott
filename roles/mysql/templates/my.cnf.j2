@@ -1,0 +1,126 @@
+[client]
+#password = your_password
+port = {{ mysql_port }}
+socket = {{ mysql_socket }}
+
+#============================================================================================================
+# mysqld
+#============================================================================================================
+[mysqld]
+user = mysql
+port = {{ mysql_port }}
+bind-address = {{ mysql_bind_address }}
+datadir = {{ mysql_datadir }}
+socket = {{ mysql_socket }}
+pid-file = {{ mysql_pid_file }}
+{% if mysql_skip_name_resolve %}
+skip-name-resolve
+{% endif %}
+basedir         = /usr
+tmpdir          = /tmp
+
+lc-messages-dir = /usr/share/mysql
+skip-external-locking
+
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links = 0
+
+#########################################################
+# Logging configuration.
+#########################################################
+{% if mysql_error_log == 'syslog' or mysql_general_log == 'syslog' %}
+syslog
+syslog-tag = {{ mysql_syslog_tag }}
+    {%- if mysql_general_log == 'syslog' %}
+general_log      = 1
+    {%- endif %}
+{% else %}
+
+    {%- if mysql_general_log %}
+general_log_file = {{ mysql_general_log }}
+general_log      = 1
+    {%- endif %}
+
+log_error = {{ mysql_error_log }}
+{% endif %}
+
+{% if mysql_slow_query_log_enabled %}
+# Slow query log configuration.
+slow_query_log = 1
+slow_query_log_file = {{ mysql_slow_query_log_file }}
+long_query_time = {{ mysql_slow_query_time | string}}
+{% endif %}
+
+#########################################################
+# Memory settings
+#########################################################
+# http://dev.mysql.com/doc/refman/5.5/en/performance-schema.html
+;performance_schema
+
+# Memory settings.
+key_buffer_size = {{ mysql_key_buffer_size }}
+max_allowed_packet = {{ mysql_max_allowed_packet }}
+table_open_cache = {{ mysql_table_open_cache }}
+sort_buffer_size = {{ mysql_sort_buffer_size }}
+read_buffer_size = {{ mysql_read_buffer_size }}
+read_rnd_buffer_size = {{ mysql_read_rnd_buffer_size }}
+myisam_sort_buffer_size = {{ mysql_myisam_sort_buffer_size }}
+
+max_connections = {{ mysql_max_connections }}
+tmp_table_size = {{ mysql_tmp_table_size }}
+max_heap_table_size = {{ mysql_max_heap_table_size }}
+
+query_cache_size = {{ mysql_query_cache_size }}
+query_cache_limit = {{ mysql_query_cache_limit }}
+
+thread_cache_size = {{ mysql_thread_cache_size }}
+# thread_stack            = 192K
+
+
+# Other settings.
+wait_timeout = {{ mysql_wait_timeout }}
+lower_case_table_names = {{ mysql_lower_case_table_names | string }}
+
+#########################################################
+# InnoDB settings.
+#########################################################
+
+
+{% if mysql_supports_innodb_large_prefix %}
+innodb_large_prefix = {{ mysql_innodb_large_prefix }}
+innodb_file_format = {{ mysql_innodb_file_format }}
+{% endif %}
+innodb_file_per_table = {{ mysql_innodb_file_per_table }}
+innodb_buffer_pool_size = {{ mysql_innodb_buffer_pool_size }}
+innodb_log_file_size = {{ mysql_innodb_log_file_size }}
+innodb_log_buffer_size = {{ mysql_innodb_log_buffer_size }}
+innodb_flush_log_at_trx_commit = {{ mysql_innodb_flush_log_at_trx_commit }}
+innodb_lock_wait_timeout = {{ mysql_innodb_lock_wait_timeout }}
+
+#============================================================================================================
+# mysqldump
+#============================================================================================================
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = {{ mysql_mysqldump_max_allowed_packet }}
+
+#============================================================================================================
+# mysqld_safe
+#============================================================================================================
+[mysqld_safe]
+# This will be passed to all mysql clients
+# It has been reported that passwords should be enclosed with ticks/quotes
+# especially if they contain "#" chars...
+# Remember to edit /etc/mysql/debian.cnf when changing the socket location.
+socket          = {{ mysql_socket }}
+# pid-file = {{ mysql_pid_file }}
+nice            = 0
+skip_log_error
+syslog
+
+# * IMPORTANT: Additional settings that can override those from this file!
+#   The files must end with '.cnf', otherwise they'll be ignored.
+#
+# DISABLED by Ansible configuration file
+# !includedir /etc/mysql/conf.d

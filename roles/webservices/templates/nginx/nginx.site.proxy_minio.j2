@@ -1,0 +1,84 @@
+# {{ ansible_managed }}
+
+# Default Template: nginix.site.minio.j2
+
+server {
+
+{% include  'parts/servername.j2' %}
+{% include  'parts/port_listen80.j2' %}
+{% include  'parts/redirection.j2' %}
+{% include  'parts/logs.j2' %}
+{% include  'parts/server_options.j2' %}
+{% if item.1.ssl.type is defined and item.1.ssl.type != "force" and ( item.1.redirect is not defined or item.1.redirect == False)%}
+
+    location / {
+        {% include  'parts/location_proxy.j2' %}
+    }
+
+    {# Specific minio auth configuration #}
+    {% if item.1.authentication is defined  %}
+        {% if item.1.authentication_paths is defined and item.1.authentication_paths != false and item.1.authentication_paths | length  %}
+            {% for auth_path in item.1.authentication_paths %}
+                {% if auth_path == "/" %}
+                    {%- include  'parts/auth.include.j2' %}
+                {% else %}
+location {{ auth_path }} {
+                        {% include  'parts/auth.include.j2' %}
+                        {% include  'parts/location_proxy.j2' %}
+        proxy_set_header Authorization  "";
+}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            {# No authentication paths defined#}
+            {%- include  'parts/auth.include.j2' %}
+        {% endif %}
+    {% endif %}
+
+{% endif %}
+}
+
+{% if item.1.ssl.type is defined %}
+    {%      if item.1.ssl.type == "optional" or  item.1.ssl.type == "force"  %}
+
+        # Value of ssl.type is: optional or force, we need a second server block
+        server {
+
+        {% include  'parts/servername.j2' %}
+        {% include  'parts/port_listen443.j2' %}
+        {% include  'parts/redirection.j2' %}
+        {% include  'parts/logs.j2' %}
+        {% include  'parts/server_options.j2' %}
+        {% if item.1.redirect is not defined or item.1.redirect == False %}
+            location / {
+                {% include  'parts/location_proxy.j2' %}
+            }
+
+            {# Specific minio auth configuration #}
+            {% if item.1.authentication is defined  %}
+                {% if item.1.authentication_paths is defined and item.1.authentication_paths != false and item.1.authentication_paths | length  %}
+                    {% for auth_path in item.1.authentication_paths %}
+                        {% if auth_path == "/" %}
+                            {%- include  'parts/auth.include.j2' %}
+                        {% else %}
+location {{ auth_path }} {
+                                {% include  'parts/auth.include.j2' %}
+                                {% include  'parts/location_proxy.j2' %}
+        proxy_set_header Authorization  "";
+}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {# No authentication paths defined#}
+                    {%- include  'parts/auth.include.j2' %}
+                {% endif %}
+            {% endif %}
+
+
+
+        {% endif %}
+        }
+    {%      endif %}
+{% endif %}
+
+

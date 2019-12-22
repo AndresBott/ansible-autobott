@@ -1,0 +1,169 @@
+---
+#============================================================================================================
+# Radicale
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Radicale V2
+#
+#============================================================================================================
+# @action # Install Radicale2 in a Venv using PIP
+# @tag role_radicale # Flag to only run this roles
+
+- name: main node red block
+  tags:
+    - role_radicale
+    - untagged
+  when: run_role_radicale
+  block:
+
+  - name: Make sure pyton3 and needed packages are  installed
+    apt:
+      name:
+        - python3
+        - python3-venv
+        - python-setuptools # needed on remote with ansible >=2.7 https://github.com/ansible/ansible/issues/47361
+        - git
+      state: present
+      update_cache: yes
+
+  - name: System group
+    group:
+      name: "{{ radicale_group }}"
+      gid: "{{ radicale_gid | default(omit) }}"
+
+  - name: Create user
+    user:
+      name: "{{ radicale_user }}"
+      group: "{{ radicale_group }}"
+      uid: "{{ radicale_uid | default(omit) }}"
+      home: "{{ radicale_install_dir }}"
+      createhome: no
+      system: yes
+
+  - name: Create needed dirs
+    file:
+      path:         "{{ item }}"
+      state:        directory
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+    with_items:
+      - "{{ radicale_install_dir }}"
+      - "{{ radicale_data_dir }}/collections"
+
+  - name: Check if py3 venv exists
+    stat:
+      path: "{{ radicale_install_dir }}/py3_venv/bin/python"
+    register: py3_radicale2_venv
+
+  - name: Create Python3 Venv
+    pip:
+      name: radicale
+      virtualenv:  "{{ radicale_install_dir }}/py3_venv"
+      virtualenv_command: /usr/bin/python3 -m venv
+    when: py3_radicale2_venv.stat.exists == False
+#      virtualenv_python: python3
+
+  - name: "Correct python Permissions "
+    file:
+      path: "{{ radicale_install_dir }}/py3_venv"
+      state:        directory
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+      recurse: yes
+
+  - name: "Create Radicale config file"
+    template:
+      src: "radicale2.conf.j2"
+      dest: "{{ radicale_install_dir }}/radicale2.config"
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+      mode:         0700
+    notify: "Restart Radicale"
+
+  - name: "Ensure log dir exists"
+    file:
+      path: "/var/log/radicale"
+      state:        directory
+      owner:        "{{ radicale_user }}"
+      group:        "root"
+
+  - name: "Create Radicale log config file"
+    template:
+      src: "radicale_logging.conf.j2"
+      dest: "{{ radicale_install_dir }}/radicale2.log.config"
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+      mode:         0700
+    notify: "Restart Radicale"
+
+
+  - name: "Setup a Radicale systemd service"
+    template:
+      src: radicale.service.j2
+      dest: "/lib/systemd/system/radicale.service"
+      owner: root
+      group: root
+      mode: 0644
+    notify: "Reload systemd"
+
+  - name: "Enable Radicale systemd service"
+    systemd:
+      name: radicale
+      enabled: yes
+      daemon_reload: yes
+    notify: "Reload systemd"
+
+#============================================================================================================
+# GIT on collections
+#============================================================================================================
+# @action # setup regular git commits for radicale collections
+
+  - name: "run git init on collections dir"
+    command: "git init {{ radicale_data_dir }}/collections"
+    args:
+      creates: "{{ radicale_data_dir }}/collections/.git"
+    become_user: "{{ radicale_user }}"
+    vars:
+        ansible_ssh_pipelining: yes
+
+  - name: "Apply .gitconfig"
+    template:
+      src: "gitconfig.j2"
+      dest: "{{ radicale_install_dir }}/.gitconfig"
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+      mode:         0700
+
+  - name: "copy gitignore file"
+    template:
+      src: "gitignore.j2"
+      dest: "{{ radicale_data_dir }}/collections/.gitignore"
+      owner:        "{{ radicale_user }}"
+      group:        "{{ radicale_group }}"
+      mode:         0700
+
+
+  - name: get radicale version
+    shell: "{{ radicale_install_dir }}/py3_venv/bin/python3 -m radicale --version"
+    register: radicale_version
+    failed_when: false
+    changed_when: false
+
+  - name: "[REPORT] radicale version"
+    debug:
+      msg: "currently using radicale version: {{ radicale_version.stdout }}"
+    when: radicale_version.rc == 0
+
+
+#- include_tasks: radicale2.yaml
+#  with_items:   "{{ webServices }}"
+#  loop_control:
+#    loop_var: webservice
+#  when:
+#    - webservice.additional_service is defined
+#    - webservice.additional_service.type is defined
+#    - webservice.additional_service.type == "radicale2"
+#    - webservice.activated | default (false, true)
+#  tags:
+#    - webservices
+#    - webservices_radicale2
+#

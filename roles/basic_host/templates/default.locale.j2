@@ -1,0 +1,47 @@
+# {{ ansible_managed }}
+LANG="{{ basic_host_locale_lang }}"
+
+{% if basic_host_locale_all is defined and basic_host_locale_all != "" %}
+LC_ALL="{{ basic_host_locale_all }}"
+{% endif %}
+
+{% if basic_host_locale_language is defined and basic_host_locale_language != "" %}
+LANGUAGE="{{ basic_host_locale_language }}"
+{% endif %}
+
+{% if basic_host_locale_numeric is defined and basic_host_locale_numeric != "" %}
+LC_NUMERIC="{{ basic_host_locale_numeric }}"
+{% endif %}
+
+{% if basic_host_locale_time is defined and basic_host_locale_time != "" %}
+LC_TIME="{{ basic_host_locale_time }}"
+{% endif %}
+
+{% if basic_host_locale_monetary is defined and basic_host_locale_monetary != "" %}
+LC_MONETARY="{{ basic_host_locale_monetary }}"
+{% endif %}
+
+{% if basic_host_locale_paper is defined and basic_host_locale_paper != "" %}
+LC_PAPER="{{ basic_host_locale_paper }}"
+{% endif %}
+
+{% if basic_host_locale_identification is defined and basic_host_locale_identification != "" %}
+LC_IDENTIFICATION="{{ basic_host_locale_identification }}"
+{% endif %}
+
+{% if basic_host_locale_name is defined and basic_host_locale_name != "" %}
+LC_NAME="{{ basic_host_locale_name }}"
+{% endif %}
+
+{% if basic_host_locale_address is defined and basic_host_locale_address != "" %}
+LC_ADDRESS="{{ basic_host_locale_address }}"
+{% endif %}
+
+{% if basic_host_locale_telephone is defined and basic_host_locale_telephone != "" %}
+LC_TELEPHONE="{{ basic_host_locale_telephone }}"
+{% endif %}
+
+{% if basic_host_locale_measurement is defined and basic_host_locale_measurement != "" %}
+LC_MEASUREMENT="{{ basic_host_locale_measurement }}"
+{% endif %}
+

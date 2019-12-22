@@ -1,0 +1,67 @@
+---
+#============================================================================================================
+# Self Signed SSL
+#============================================================================================================
+
+# Since nginx wont stat if we have a cert configured but not present, but without nginx we cannot complete the
+# let's encrypt assertion, therefore we first generate  self signed
+- name: check if let's encrypt certificate is available (workaround for chiken-egg issue with nginx + ssl)
+  stat:
+    path: "/etc/letsencrypt/live/{{ item.1.domain }}/fullchain.pem"
+  register: letsencrypt_certificate_check
+  when: item.1.ssl.provider == "letsencrypt"
+
+- name: delete wrong links to letsencrypt certificates
+  file:
+    path: "{{ path_item }}"
+    state: absent
+  with_items:
+     - "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.pkey.pem"
+     - "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.cert.pem"
+  when:
+    - item.1.ssl.provider == "letsencrypt"
+    - letsencrypt_certificate_check.stat.exists == False
+  loop_control:
+    loop_var: path_item
+
+
+- name: Generate self signed
+  when: item.1.ssl.provider == "selfsigned" or letsencrypt_certificate_check.stat.exists == False
+  block:
+
+  - name: Ensure SSL directory exists
+    file:
+      path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed"
+      state: directory
+
+  - name: Generate an OpenSSL private key.
+    openssl_privatekey:
+      path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.pkey.pem"
+
+  - name: Generate an OpenSSL CSR.
+    openssl_csr:
+      path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.csr"
+      privatekey_path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.pkey.pem"
+      common_name: "{{ item.1.domain }}"
+
+  - name: Generate a Self Signed OpenSSL certificate.
+    openssl_certificate:
+      path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.cert.pem"
+      privatekey_path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.pkey.pem"
+      csr_path: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.csr"
+      provider: selfsigned
+
+  - name: link Self Signed certificate
+    file:
+      src: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.cert.pem"
+      dest: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.cert.pem"
+      state: link
+
+
+  - name: link Self Signed private key
+    file:
+      src: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/self_signed/{{ item.1.domain }}.pkey.pem"
+      dest: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.pkey.pem"
+      state: link
+
+

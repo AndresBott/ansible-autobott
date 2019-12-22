@@ -1,0 +1,125 @@
+---
+#============================================================================================================
+# Spamassassin
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Ansible role to install and configure Spamassassin as a milter service
+
+#============================================================================================================
+# @tag role_spamassassin # Only run this role
+
+- name: main block
+  tags:
+    - role_spamassassin
+    - untagged
+  when:
+    - run_role_spamassassin is defined
+    - run_role_spamassassin
+  block:
+
+# @todo task: add parameter option to disable bayesian learning
+
+  - name: install required packages
+    apt:
+      name:
+        - spamass-milter
+        - spamassassin
+        - pyzor
+        - razor
+        - libdigest-sha-perl
+        - libbsd-resource-perl
+        - libgeo-ip-perl
+        - libnet-cidr-lite-perl
+        - libencode-detect-perl
+        - libnet-patricia-perl
+      state: present
+      update_cache: yes
+    notify: "Enabling spamd at startup"
+
+  - name: Setting spamass-milter options
+    template:
+      src: etc-default-spamass-milter.conf.j2
+      dest: /etc/default/spamass-milter
+    notify: "restart Spamassa-milter"
+
+  - name: Setting spamd options
+    template:
+      src: etc-default-spamassassin.conf.j2
+      dest: /etc/default/spamassassin
+    notify: "restart Spamassassin"
+
+  - name: Setting spamd local.cf
+    template:
+      src: local.conf.j2
+      dest: /etc/spamassassin/local.cf
+    notify: "restart Spamassassin"
+
+  - name: "Enable cron sa-update for a weekly update"
+    cron:
+      name:         "Enable cron sa-update for a weekly update"
+      minute:       "0"
+      hour:         "5"
+      day:          "*"
+      weekday:      "2"
+      month:        "*"
+      job:          "/usr/bin/sa-update && /usr/sbin/service spamassassin restart > /dev/null"
+    notify: "restart Spamassassin"
+
+  - name: use bayesian filter
+    when: spamassasin_use_bayes
+    block:
+
+    - name: Adding user debian-spamd to vmail group
+      user:
+        name: vmail
+        groups: debian-spamd
+
+    - name: create email dir if needed
+      file:
+        path: "{{email_data_dir}}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}"
+        state: directory
+        owner: vmail
+        group: vmail
+        mode: 0750
+      with_items: "{{ email_accounts }}"
+      when: item.active == True
+      notify: "restart Spamassassin"
+
+    - name: copy spam learn script
+      template:
+        src: spamLearn.bash.j2
+        dest: "{{email_data_dir}}/spamLearn.bash"
+        mode: 0700
+        owner: root
+        group: root
+
+# @todo deprecation # remove old spamlearn actions
+
+    - name: "[DEPRECTAION] delete old spam learn script"
+      file:
+        path: "{{email_data_dir}}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/spamLearn.bash"
+        state: absent
+      with_items: "{{ email_accounts }}"
+
+    - name: "[DEPRECTAION] delete old spam learn full-learn-done"
+      file:
+        path: "{{email_data_dir}}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/full-learn-done"
+        state: absent
+      with_items: "{{ email_accounts }}"
+
+    - name: " [DEPRECTAION] Disable cron sa-learn for email accounts"
+      cron:
+        name: "Enable cron sa-learn for email accounts {{ item.email }}"
+        state: absent
+      with_items: "{{ email_accounts }}"
+
+    - name: "Enable cron sa-learn"
+      cron:
+        name:         "Enable cron sa-learn"
+        minute:       "{{ spamassasin_bayes_cron.minute }}"
+        hour:         "{{ spamassasin_bayes_cron.hour }}"
+        day:          "*"
+        weekday:      "*"
+        month:        "*"
+        job:          "{{email_data_dir}}/spamLearn.bash > /dev/null"
+
+

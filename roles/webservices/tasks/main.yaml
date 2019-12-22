@@ -1,0 +1,96 @@
+---
+
+# @tag webservices # run all webservices actions
+
+- name: register php version
+  shell: php -v | head -1 | grep -o -P '\d+\.\d'
+# shell:  'php -v | grep -m 1 --only-matching --perl-regexp "7\.\\d+"'
+  register: php_version_shell_
+  failed_when: false
+  changed_when: false
+  tags:
+    - webservices
+    - webservices_phpfpm
+    - webservices_nginx
+    - webservices_users
+
+- name: register fact php_vers
+  set_fact:
+    php_vers: "{{ php_version_shell_.stdout }}"
+  tags:
+    - webservices
+    - webservices_phpfpm
+    - webservices_nginx
+    - webservices_users
+
+- name: register mysql version
+  command: mysql --version
+  register: _mysql_version
+  failed_when: false
+  changed_when: false
+  tags:
+    - webservices
+    - webservices_mysql
+
+- name: register fact mysql_version
+  set_fact:
+    mysql_version: "{{ _mysql_version.stdout_lines }}"
+  when: _mysql_version.rc == 0
+  tags:
+    - webservices
+    - webservices_mysql
+
+# @action # create/delete users, and their corresponding home structure
+# @tag webservices_users # update the settings for webservices users
+- import_tasks: users.yaml
+  tags:
+    - webservices
+    - webservices_users
+
+# @action # create/delete nginx configurations for every domain
+# @tag webservices_nginx # update the nginx settings for webservices
+- import_tasks: nginx.yaml
+  tags:
+    - webservices
+    - webservices_nginx
+
+# @action # create/delete php-fpm pool configurations for every domain
+# @tag webservices_phpfpm # update the php-fom settings for webservices
+- import_tasks: phpfpm.yaml
+  tags:
+    - webservices
+    - webservices_phpfpm
+
+# @action # create/delete mysql databases and related users for every service
+# @tag webservices_mysql # update the mysql settings for webservices ( only when run_role_mysql:yes )
+- import_tasks: mysql.yml
+  when: mysql_version is defined
+  tags:
+    - webservices
+    - webservices_mysql
+
+# @action # create ssl certificates for every domain (self signed or let's encrypt)
+# @tag webservices_ssl # update the ssl / let's Encrypt certificates for webservices
+- import_tasks: ssl.yaml
+  tags:
+    - webservices
+    - webservices_ssl
+
+# @action # create sample dummy content if enabled by configuration
+# @tag webservices_sample_content # create sample content if it does not exists
+- import_tasks: sample_content.yaml
+  tags:
+    - webservices
+    - webservices_sample_content
+
+# @action # create cron entries for configured actions
+# @tag webservices_cron # create cron entries
+- import_tasks: cron.yaml
+  tags:
+    - webservices
+    - webservices_cron
+
+
+
+
+

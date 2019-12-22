@@ -1,0 +1,24 @@
+# File: parts/port_listen443.j2
+
+    listen {% if item.1.port_ssl is defined and item.1.port_ssl != ""  %}{{ item.1.port_ssl }}{% else %}443{% endif %} ssl {% if item.nginx_default is defined and item.nginx_default %} default_server{% endif %};
+    listen [::]:{% if item.1.port_ssl is defined and item.1.port_ssl != ""  %}{{ item.1.port_ssl }}{% else %}443{% endif %} ssl {% if item.nginx_default is defined and item.nginx_default %} default_server{% endif %};
+    ssl_certificate {{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.cert.pem;
+    ssl_certificate_key {{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.pkey.pem;
+        ## add some recomended ssl params -> make parameter dependent in future
+        include /etc/nginx/snippets/nginx.ssl-params.conf;
+
+{% if item.1.ssl.type is defined %}
+    {%      if item.1.ssl.type == "optional" or  item.1.ssl.type == "force"  %}
+        # this is for letsencrypt
+        location ^~ /.well-known/acme-challenge/ {
+        {%          if item.1.authentication is defined and item.1.authentication == "htpasswd_file"  %}
+            auth_basic off; # disable authentication for acme requests
+        {%          endif %}
+        root "{{ webservices_root }}/{{ item.0.name }}/home_dir/letsencrypt_public";
+        try_files $uri $uri/ =404;
+        }
+    {%      endif %}
+{%  endif %}
+
+
+{# add athis j2 comment to persist the empty line#}

@@ -1,0 +1,14 @@
+LOCK TABLES `user` WRITE;
+/*!40000 ALTER TABLE `user` DISABLE KEYS */;
+INSERT INTO `user` VALUES
+  (1,'gitea','gitea','','gitea@gitea.com',0,
+   '2f31b8d309e41a4fe1f950aecc7a86d3ecc2e2548aa80b803f7b54669d70149a858447963bbc443530cb2f7696ad1e3a12fb',
+   0,0,'',0,'','','zn9Zkyjcbb','lFejxbDgFc',1492199413,1492199417,0,0,-1,1,1,0,0,1,0,'27c380b1dd94210ff0aa4f9d68d87119',
+   'gitea@gitea.com',0,0,0,0,0,'',0,0,'')
+# ON DUPLICATE KEY UPDATE
+#   name='gitea'
+;
+/*!40000 ALTER TABLE `user` ENABLE KEYS */;
+UNLOCK TABLES;
+
+

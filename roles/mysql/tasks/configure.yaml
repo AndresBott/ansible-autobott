@@ -1,0 +1,72 @@
+---
+- name: Configure
+  tags:           ['role_mysql',"untagged"]
+  block:
+
+  - name: Copy my.cnf global MySQL configuration.
+    template:
+      src: my.cnf.j2
+      dest: "{{ mysql_config_file }}"
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart mysql
+
+  - name: Create datadir if it does not exist
+    file:
+      path: "{{ mysql_datadir }}"
+      state: directory
+      owner: mysql
+      group: mysql
+      mode:  0755
+      setype: mysqld_db_t
+
+  - name: Create slow query log file (if configured).
+    shell: "touch {{ mysql_slow_query_log_file }}"
+    args:
+      creates: "{{ mysql_slow_query_log_file }}"
+    when: mysql_slow_query_log_enabled
+
+  - name: Set ownership on slow query log file (if configured).
+    file:
+      path: "{{ mysql_slow_query_log_file }}"
+      state: file
+      owner: mysql
+      group: mysql
+      mode: 0640
+    when: mysql_slow_query_log_enabled
+
+#    @ todo: task # verify if mysql rotates logs automatically or of we need to add a log rotation
+  - name: Create error log file (if configured).
+    shell: "touch {{ mysql_error_log }}"
+    args:
+      creates: "{{ mysql_error_log }}"
+    when: mysql_error_log != ""
+
+  - name: Set ownership on error log file (if configured).
+    file:
+      path: "{{ mysql_error_log }}"
+      state: file
+      owner: mysql
+      group: mysql
+      mode: 0640
+    when: mysql_error_log != ""
+
+  - name: Create general log file (if configured).
+    shell: "touch {{ mysql_general_log }}"
+    args:
+      creates: "{{ mysql_general_log }}"
+    when: mysql_general_log != ""
+
+  - name: Set ownership on general log file (if configured).
+    file:
+      path: "{{ mysql_general_log }}"
+      state: file
+      owner: mysql
+      group: mysql
+      mode: 0640
+    when: mysql_general_log != ""
+
+  - name: Ensure MySQL is started and enabled on boot.
+    service: "name={{ mysql_daemon }} state=started enabled=True"
+    register: mysql_service_configuration

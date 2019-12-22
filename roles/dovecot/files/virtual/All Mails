@@ -1,0 +1,6 @@
+*
+mailbox*
+-Spam
+-Trash
+-Trash/*
+all

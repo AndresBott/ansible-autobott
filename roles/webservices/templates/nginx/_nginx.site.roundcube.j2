@@ -1,0 +1,47 @@
+# {{ ansible_managed }}
+# Default Template: nginix.site.default.j2
+server {
+
+{% include  'nginix.part.servername.j2' %}
+{% include  'nginix.part.port_listen80.j2' %}
+{% include  'nginix.part.redirection.j2' %}
+{% include  'nginix.part.logs.j2' %}
+{% if item.1.ssl.type is defined and item.1.ssl.type != "force"  and item.1.redirect == False %}
+
+    {% include  'nginix.part.index.j2' %}
+    {% include  'nginix.part.auth.j2' %}
+
+    {% include  'nginix.part.roundcube_location.j2' %}
+
+    {% include  'nginix.part.static.j2' %}
+
+{% endif %}
+}
+
+
+{% if item.1.ssl.type is defined %}
+    {%      if item.1.ssl.type == "optional" or  item.1.ssl.type == "force"  %}
+
+        # Value of ssl.type is: optional or force, we need a second server block
+        server {
+
+        {% include  'nginix.part.servername.j2' %}
+        {% include  'nginix.part.port_listen443.j2' %}
+        {% include  'nginix.part.redirection.j2' %}
+        {% include  'nginix.part.logs.j2' %}
+        {% include  'nginix.part.index.j2' %}
+        {% include  'nginix.part.auth.j2' %}
+
+        {% include  'nginix.part.roundcube_location.j2' %}
+
+
+        {% include  'nginix.part.static.j2' %}
+        }
+    {%      endif %}
+{% endif %}
+
+
+
+
+
+

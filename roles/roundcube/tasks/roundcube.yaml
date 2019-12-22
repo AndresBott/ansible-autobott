@@ -1,0 +1,134 @@
+---
+#============================================================================================================
+# Roundcube
+#============================================================================================================
+
+- name: Install needed packages by roundcube
+  apt:
+    name:
+      - php-pspell
+      - php-zip
+      - php-net-sieve
+      - aspell
+      - aspell-es
+      - aspell-de
+    state: present
+    update_cache: yes
+    install_recommends: no
+
+- name: System group
+  group:
+    name:   "{{ item.group }}"
+    gid:    "{{ item.gid | default(omit) }}"
+
+- name: Create user
+  user:
+    name:     "{{ item.user }}"
+    group:    "{{ item.group }}"
+    uid:      "{{ item.uid | default(omit) }}"
+    home:     "{{ item.install_dir }}"
+    createhome: no
+    system:   yes
+
+- name: "Create Roundcube install Directories "
+  file:
+    path:         "{{ item.install_dir }}/roundcube_installs"
+    state:        directory
+    owner:        "{{ item.user }}"
+    group:        "{{ item.group }}"
+    mode:         0750
+
+- name: Unarchive Roundcube
+  unarchive:
+    src:          "{{ roundcube_sources[roundcube_current_version].url }}"
+    dest:         "{{ item.install_dir }}/roundcube_installs"
+    owner:          "{{ item.user }}"
+    group:          "{{ item.group }}"
+    mode:         0750
+    creates:      "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/index.php"
+    remote_src: yes
+
+- stat:
+    path: "{{ item.public_html }}"
+  register: public_html_link
+
+- name: "Make sure public_html is not present if is folder"
+  file:
+    path:         "{{ item.public_html }}"
+    state:        absent
+  when: public_html_link.stat.islnk is defined and not public_html_link.stat.islnk
+
+- name: link to active
+  file:
+    src:          "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}"
+    dest:         "{{ item.public_html }}"
+    owner:        "{{ item.user }}"
+    group:        "{{ item.group }}"
+    mode: 0750
+    state: link
+
+#####################################################
+# Work on database
+#####################################################
+
+- name: check table exists
+  shell: "mysql -e 'show tables;' {{ item.db_name }} | grep users"
+  register: dbstatus_roundcube
+  failed_when: "dbstatus_roundcube.rc == 2"
+  check_mode: no
+  changed_when: False
+
+- name: make sure database for roundcube is present
+  mysql_db:
+    name: "{{ item.db_name }}"
+    state: present
+  when: dbstatus_roundcube.rc == 1
+
+- name: Recreate database content if not present
+  mysql_db:
+    name: "{{ item.db_name }}"
+    state: import
+    target: "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/SQL/mysql.initial.sql"
+  when: dbstatus_roundcube.rc == 1
+
+  #####################################################
+  # Work on Config
+  #####################################################
+
+- name: Create Roundcube config
+  template:
+    src: config-inc.php.j2
+    dest:           "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/config/config.inc.php"
+    owner:          "{{ item.user }}"
+    group:          "{{ item.group }}"
+    mode: 0750
+
+- name: Add roundcube cleandb.sh to cron.d
+  template:
+    src: cron_cleandb.j2
+    dest: "/etc/cron.d/roundcube-cleandb.{{ item.name }}.sh"
+    owner: root
+    group: root
+    mode: 0644
+
+
+  #####################################################
+  # Manual Plugins
+  #####################################################
+
+- name: "Create Roundcube install Directories: manual_plugins"
+  file:
+    path:         "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins"
+    state:        directory
+    owner:          "{{ item.user }}"
+    group:          "{{ item.group }}"
+    mode:         0750
+
+- name: Install Gihub plugins
+  include_tasks: github_plugin.yaml
+  with_items: "{{item.config.github_plugins}}"
+  loop_control:
+    loop_var: plugin_name
+
+
+

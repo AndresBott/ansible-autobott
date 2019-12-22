@@ -1,0 +1,53 @@
+[pybackup]
+; Profile name, used in the generated tgz, dont use spaces
+profilename = '{{ item.name }}'
+
+; dont put the date to the filename
+; nodate = true
+
+; root dir to backup
+{% if item.backup_dir is defined and item.backup_dir != ""  %}
+rootdir = '{{ item.backup_dir  |  regex_replace('\\/$', '')}}/'
+{% endif %}
+
+; follow symbolic links when copying files
+{% if item.follow_symlinks is defined and item.follow_symlinks %}
+followsymlinks = 'true'
+{% else %}
+followsymlinks = 'false'
+{% endif %}
+
+; destination of the backup files
+;important: the destination folder only contains backup files from this job
+destination = '{{ item.output_dir |  regex_replace('\\/$', '')}}/'
+
+; you can define a different tmp folder
+
+{% if item.tmp_dir is defined and item.tmp_dir != ""  %}
+tmpdir =  '{{ item.tmp_dir }}'
+{% else %}
+; tmpdir =  '../tmp_dir'
+{% endif %}
+
+; not yet implemented
+; excludes = ''
+
+{% if item.backup_mysql is defined and item.backup_mysql != "" and item.backup_mysql !=False %}
+;mysql database name to backup
+mysqldb = '{{ item.backup_mysql }}'
+{% else %}
+;mysql database name to backup
+;mysqldb =
+{% endif%}
+
+; how many older copies should be keeped
+keepold = "{{ item.keep_old | default( 4 ) }}"
+
+;change ownership of the resulting file
+chown = "{{ item.file_owner }}"
+chmod = "{{ item.file_mode }}"
+
+; fallback mysql conection data
+;[client]
+;user = "username"
+;password = "password"

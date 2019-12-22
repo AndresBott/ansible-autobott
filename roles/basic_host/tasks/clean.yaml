@@ -1,0 +1,22 @@
+#============================================================================================================
+# Clean old data
+#============================================================================================================
+- name: Clean old data in basic host
+  tags:           ['role_basic_host','configuration','untagged','enroll']
+  block:
+
+  - name: clean old sudo files
+    file:
+      state: absent
+      path: "{{ item }}"
+    with_items:
+      - /etc/sudoers.d/ansUSerPasswdLessSudo
+      - /etc/sudoers.d/passwdLessSudo
+      -
+  - name: clean old pam.d files
+    file:
+      state: absent
+      path: "{{ item }}"
+    with_items:
+      - /etc/pam.d/nginx.webadmins.auth
+

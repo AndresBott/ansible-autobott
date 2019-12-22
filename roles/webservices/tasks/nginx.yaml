@@ -1,0 +1,138 @@
+---
+#============================================================================================================
+# Main actions
+#============================================================================================================
+
+- name: Make sure nginx default site absent
+  file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
+  when: webservices | length > 0
+
+#########################################################
+# Nginx site config
+#########################################################
+
+- name: "check if {{ webservices_root }}/{{ item.name }}/home_dir/public_html is a link"
+  stat:
+    path:         "{{ webservices_root }}/{{ item.name }}/home_dir/public_html"
+  register: webservces_public_thml_link
+  with_items:   "{{ webservices }}"
+  when:
+    - item.enabled | default (true)
+    - item.nginx is defined
+    - item.nginx.enabled | default (false,true)
+
+- name: "Creates webService public_html Directories ( skip if its a link )"
+  file:
+    path:         "{{ webservices_root }}/{{ item.item.name }}/home_dir/public_html"
+    state:        directory
+    owner:        "{{ item.item.name }}"
+    group:        "{{ item.item.name }}"
+    mode:         0750
+  with_items:   "{{ webservces_public_thml_link.results }}"
+  when:
+    - item.item.enabled | default (true)
+    - item.item.nginx is defined
+    - item.item.nginx.enabled | default (false,true)
+    - not item.stat.exists or ( item.stat.islnk is defined and not item.stat.islnk)
+
+#@todo improvement # add sub_template to nginx in order to load application specific location rules, i.e roundcube block /cache
+- name: "Create nginx sites avaliable"
+  template:
+    src: nginx/nginx.site.{{ item.1.template  }}.j2
+    dest: /etc/nginx/sites-available/{{ item.1.domain }}.conf
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  notify: "restart web server"
+  when:
+    - item.0.enabled | default (true)
+    - item.0.nginx is defined
+    - item.0.nginx.enabled | default (false,true)
+
+- name: "Create link to sites-enabled"
+  file:
+    src:          "/etc/nginx/sites-available/{{ item.1.domain }}.conf"
+    dest:         "/etc/nginx/sites-enabled/{{ item.1.domain }}.conf"
+    state:        link
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  notify: "restart web server"
+  when:
+    - item.0.enabled | default (true)
+    - item.0.nginx.enabled | default (false,true)
+
+
+
+#########################################################
+# Nginx create htpasswd file
+#########################################################
+
+- name: Make sure we can use htpasswd module - install python-passlib
+  apt:
+    pkg: python-passlib
+    state: present
+
+- include_tasks: htpasswd.yaml
+  tags:
+    - webservices
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  when:
+    - item.0.enabled | default (true)
+    - item.0.nginx is defined
+    - item.0.nginx.enabled | default (false,true)
+    - item.1.authentication is defined
+    - item.1.authentication | default (false,true)
+
+##########################################################
+## Nginx Deactivate
+##########################################################
+
+- name: "Delete inactive links to sites-enabled"
+  file:
+    path:         "/etc/nginx/sites-enabled/{{ item.1.domain }}.conf"
+    state:        absent
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+  notify: "restart web server"
+  when:
+    (not item.0.enabled | default (false,true) ) or
+    (not item.0.nginx.enabled | default (false,true))
+
+- name: "[REPORT] test"
+  debug:
+    msg: "item 0: {{ not item.0.enabled | default (false,true) }} OR  not item.0.nginx.enabled | default (false,true) "
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+
+
+
+- name: "Delete inactive site in sites-avaliable"
+  file:
+    path:         "/etc/nginx/sites-available/{{ item.1.domain }}.conf"
+    state:        absent
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+
+  notify: "restart web server"
+  when:
+    (not item.0.enabled | default (false,true) ) or
+    (not item.0.nginx.enabled | default (false,true))
+
+# @todo improvement # make use of option webservices_exclusive_nginx to identify and delete not used configurations
+# @todo improvement # if all nginx sites are disabled, add the default config
+
+

@@ -1,0 +1,30 @@
+<?php
+
+
+/*
+ * Automatic addressbook NG configuration
+ *
+ * Below is the default configuration of Automatic addressbook NG plugin.
+ *
+ * The settings specified below may be overriden in your main Roundcube deployment configuration files in config/ dir.
+ *
+ * WARNING: Do not copy this file to config.inc.php in the same directory. That file is ignored.
+ */
+
+/*
+ * Addressbook to use for storing new contacts.
+ * Possible options:
+ * - 'sql' or 0            - RC integrated SQL addressbook, if you are using it (default option)
+ * - 'yourLDAPaddressbook' - must be writeable!
+ * - -1                    - for default address book
+ */
+$config['automatic_addressbook_ng_use_addressbook'] = '-1';
+
+
+/*
+ * If set to non-null value, newly-created contacts will be assigned to specified group.
+ * If group does not yet exist, it will be created.
+ * If you wish to NOT use this, set this to empty string (not to NULL, as that is replaced by default value).
+ * NOTICE: Your addressbook MUST support creating/using groups for this to work.
+ */
+$config['automatic_addressbook_ng_use_group'] = 'Automatic addresses';

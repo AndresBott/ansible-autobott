@@ -1,0 +1,81 @@
+---
+- name: "Run Backup jon"
+  tags:
+    - role_pybackup_remote
+  block:
+
+#    - name: delegate_to Test
+#      shell: "whoami"
+#      sudo: no
+#      delegate_to: localhost
+#      register: test_var
+#
+#    - debug: var=test_var
+#
+#    - fail:
+#        msg: "intended"
+
+    - name: "Delete dir in case of previous faulty backup"
+      file:
+        path: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/"
+        state: absent
+
+    - name: "Create output backup dir "
+      file:
+        path: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/backup/"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode:  0700
+
+    - name: "Create tmp backup dir "
+      file:
+        path: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/tmp/"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode:  0700
+
+    - name: create backup config file to perform backup
+      template:
+        src: "pybackupRemoteConfig.ini.j2"
+        dest: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/{{ item.name }}.pybackup.ini"
+
+    - name: "Perform ansible backup for item: {{ item.name }} "
+      command: /usr/local/sbin/pybackup.py --backup {{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/{{ item.name }}.pybackup.ini
+
+    - name: "Make sure the backup file is readable"
+      file:
+        path: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/backup/{{ item.name }}.backup.tgz"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode:  0700
+
+    - name: "Fetch Remote file lo Local host"
+      fetch:
+        src: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/backup/{{ item.name }}.backup.tgz"
+        dest: "{{ pybackup_remote_out }}/{{ inventory_hostname }}/{{ item.name }}/{{ inventory_hostname }}.{{ ansible_date_time.year }}_{{ ansible_date_time.month }}_{{ ansible_date_time.day }}_-_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}_{{ item.name }}.backup.tgz"
+        flat: yes
+      become: no
+      when: pybackup_remote_fetch_type == "ans"
+
+    - set_fact:
+        remote_host: '{{ ansible_host }}'
+
+    - debug:
+        msg: "shell scp -P {{ ansible_port | default('22') }} {{ ansible_user}}@{{ remote_host }}:{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/backup/{{ item.name }}.backup.tgz {{ pybackup_remote_out }}/{{ inventory_hostname }}/{{ item.name }}/{{ inventory_hostname }}.{{ ansible_date_time.year }}_{{ ansible_date_time.month }}_{{ ansible_date_time.day }}_-_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}_{{ item.name }}.backup.tgz"
+      when: pybackup_remote_fetch_type == "scp"
+      become: no
+      delegate_to: localhost
+
+    - name: "Fetch Remote file lo Local host using scp"
+      command: "scp -P {{ ansible_port | default('22') }} {{ ansible_user}}@{{ remote_host }}:{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/backup/{{ item.name }}.backup.tgz {{ pybackup_remote_out }}/{{ inventory_hostname }}/{{ item.name }}/{{ inventory_hostname }}.{{ ansible_date_time.year }}_{{ ansible_date_time.month }}_{{ ansible_date_time.day }}_-_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}_{{ item.name }}.backup.tgz"
+      delegate_to: localhost
+      become: no
+      when: pybackup_remote_fetch_type == "scp"
+
+    - name: "Delete tmp backup dir "
+      file:
+        path: "{{ pybackup_remote_tmp }}/ansible_backup_{{ item.name }}/"
+        state: absent
+

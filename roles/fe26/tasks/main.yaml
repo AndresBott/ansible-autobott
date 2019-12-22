@@ -1,0 +1,81 @@
+---
+#============================================================================================================
+# Fe26
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Fe26 and perform some basic configurations
+#
+#============================================================================================================
+
+- name: main Fe26 block
+  tags:
+    - role_fe26
+    - untagged
+  when:
+    - run_role_fe26 is defined
+    - run_role_fe26
+  block:
+
+  - name: System group
+    group:
+      name: "{{ fe26_group }}"
+      gid: "{{ fe26_gid | default(omit, true) }}"
+
+  - name: Create system user fe26
+    user:
+      name: "{{ fe26_user }}"
+      uid:  "{{ fe26_uid | default(omit, true) }}"
+      group: "{{ fe26_group }}"
+      home:  "{{ fe26_dir }}"
+      create_home: no
+
+  - name: "Create dirs"
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ fe26_user }}"
+      group: "{{ fe26_group }}"
+      mode: 0750
+    with_items:
+      - "{{ fe26_dir }}"
+      - "{{ fe26_data_dir }}"
+      - "{{ fe26_dir }}/binaries"
+
+  - name: "Download fe26 binary"
+    get_url:
+      url: "https://github.com/AndresBott/Fe26/releases/download/{{ fe26_current_version }}/fe26-linux-amd64"
+      dest: "{{ fe26_dir }}/binaries/fe26-{{ fe26_current_version }}"
+      owner: "{{ fe26_user }}"
+      group: "{{ fe26_group }}"
+      mode: 0750
+    notify: "restart fe26"
+
+  - name: link fe26
+    file:
+      src: "{{ fe26_dir }}/binaries/fe26-{{ fe26_current_version }}"
+      dest: "{{ fe26_dir }}/binaries/fe26-latest"
+      state: link
+    notify: "restart fe26"
+
+  - name: "Setup systemd service"
+    template:
+      src: fe26.service.j2
+      dest: /lib/systemd/system/fe26.service
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - "Reload systemd"
+      - "restart fe26"
+
+  - name: "Enable systemd service"
+    systemd:
+      name: fe26
+      enabled: yes
+      daemon_reload: yes
+    notify:
+      - "Reload systemd"
+      - "restart fe26"
+
+
+
+

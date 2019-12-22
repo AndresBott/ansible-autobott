@@ -1,0 +1,29 @@
+#!/bin/sh
+PERCENT=$1
+USER=$2
+
+if [ "$PERCENT" -gt 0 ]; then
+
+cat << EOF | /usr/lib/dovecot/dovecot-lda -d $USER -o "plugin/quota=count:User quota:noenforcing"
+From: postmaster@webstage.rivervps.com
+Subject:[quota] Warning: quota > $PERCENT%
+
+Your mailbox is now $PERCENT% full. please consider deleting some files
+
+EOF
+  
+    
+else
+
+PERCENT=$((-$PERCENT))
+
+cat << EOF | /usr/lib/dovecot/dovecot-lda -d $USER -o "plugin/quota=count:User quota:noenforcing"
+From: postmaster@webstage.rivervps.com
+Subject:[quota] Notification: quota < $PERCENT%
+
+Your mailbox is now under $PERCENT% full. Great job!
+
+EOF
+
+
+fi

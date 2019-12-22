@@ -1,0 +1,74 @@
+---
+
+#- name: print stat_result
+#  debug:
+#    msg:  "{{ item.condition | selectattr('send_mail_to', 'defined') | map(attribute='send_mail_to') | list | first }}"
+
+#============================================================================================================
+# Send Email test
+#============================================================================================================
+
+- name: Sending Ansible validation emails
+  mail:
+    host: "{{ item.server.host }}"
+    port: "{{ item.server.port | default ( 587 ) }}"
+    username: "{{ item.server.username }}"
+    password: "{{ item.server.password }}"
+    from: "{{ item.server.from }}"
+    to: "{{ item.condition | selectattr('send_mail_to', 'defined') | map(attribute='send_mail_to') | list | first }}"
+    subject: Ansible email validation.
+    body: Testing Ansible email validation from  {{ ansible_hostname }} on {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+    secure: starttls
+  register: email_result
+  changed_when: false
+  when:
+    - item.condition | selectattr('send_mail_to', 'defined') | list | count > 0
+
+- name: "[REPORT] test sending an email"
+  debug:
+    msg: "WARN sending an email not successful"
+  changed_when: true
+  when: email_result.failed is not defined or email_result.failed == true
+
+
+#============================================================================================================
+# Open ports
+#============================================================================================================
+
+- name: execute shell
+  shell: "echo exit | telnet {{ item.server.host }} {{ item_port.port }}"
+  register: email_result_telnet
+  failed_when: false
+  changed_when: false
+  with_items: "{{ item.ports }}"
+  loop_control:
+    loop_var: item_port
+
+#- name: print email_result_telnet
+#  debug:
+#    var:  i
+#  with_items: "{{ email_result_telnet.results }}"
+#  loop_control:
+#    loop_var: i
+
+- name: "[REPORT] check closed ports"
+  debug:
+    msg: "port {{ i.item_port.port }} is open but should be closed"
+  changed_when: true
+  with_items: "{{ email_result_telnet.results }}"
+  loop_control:
+    loop_var: i
+  when:
+    - i.stdout.find("Connected") != -1
+    - i.item_port.status == "closed"
+
+- name: "[REPORT] check open ports"
+  debug:
+    msg: "port {{ i.item_port.port }} is closed but should be open"
+  changed_when: true
+  with_items: "{{ email_result_telnet.results }}"
+  loop_control:
+    loop_var: i
+  when:
+    - i.stdout.find("Connected") == -1
+    - i.item_port.status == "open"

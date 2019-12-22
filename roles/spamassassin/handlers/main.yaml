@@ -1,0 +1,8 @@
+- name: restart Spamassassin
+  service: name=spamassassin state=restarted
+
+- name: restart Spamassa-milter
+  service: name=spamass-milter state=restarted
+
+- name: Enabling spamd at startup
+  command: systemctl enable spamassassin

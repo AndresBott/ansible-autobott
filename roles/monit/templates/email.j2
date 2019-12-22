@@ -1,0 +1,36 @@
+###############################################################################
+## Email section
+###############################################################################
+##
+## Mail settings
+{% if monit_alert.smtp.url is defined and monit_alert.smtp.url != "" %}
+set mail-format {
+    from: monit@{{ ansible_fqdn }}
+    subject:[MONIT] $SERVICE $EVENT :: $DATE
+{% if monit_alert.replyto is defined %}
+    reply-to: {{ monit_alert.replyto }}
+{% endif %}
+message:
+Service:     $SERVICE
+Event:       $EVENT
+Date:        $DATE
+Action:      $ACTION
+Host:        $HOST
+Description: $DESCRIPTION
+
+Monit
+}
+set mailserver {{ monit_alert.smtp.url }} port  {{ monit_alert.smtp.port }}
+    username {{ monit_alert.smtp.username }} password "{{ monit_alert.smtp.password }}"
+{% if monit_alert.smtp.tls %}
+    using tlsv12
+{% endif %}
+
+{% for item in monit_alert.notify %}
+set alert {{ item }} #email address which will receive monit alerts
+{% endfor %}
+{% else %}
+# SMTP settings not defined
+{% endif %}
+
+

@@ -1,0 +1,7 @@
+# File: parts/server_options.j2
+{% if item.1.server_options is defined and item.1.server_options != False  %}
+    {% for option in item.1.server_options %}
+{{ option }};
+    {% endfor %}
+{% endif %}
+

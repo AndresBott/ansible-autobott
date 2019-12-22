@@ -1,0 +1,20 @@
+#source based on: https://github.com/nodesource/distributions/tree/master/deb
+{% if nodejs_version_repo is defined  and  nodejs_version_repo == 8 %}
+deb https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main
+deb-src https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main
+{% elif  nodejs_version_repo is defined  and  nodejs_version_repo == 9 %}
+deb https://deb.nodesource.com/node_9.x {{ ansible_distribution_release }} main
+deb-src https://deb.nodesource.com/node_9.x {{ ansible_distribution_release }} main
+{% elif  nodejs_version_repo is defined  and  nodejs_version_repo == 10 %}
+deb https://deb.nodesource.com/node_10.x {{ ansible_distribution_release }} main
+deb-src https://deb.nodesource.com/node_10.x {{ ansible_distribution_release }} main
+{% elif  nodejs_version_repo is defined  and  nodejs_version_repo == 11 %}
+deb https://deb.nodesource.com/node_11.x {{ ansible_distribution_release }} main
+deb-src https://deb.nodesource.com/node_11.x {{ ansible_distribution_release }} main
+{% else  %}
+# configuring default versions 8 LTS
+deb https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main
+deb-src https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main
+{% endif %}
+
+

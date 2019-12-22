@@ -1,0 +1,60 @@
+---
+
+#########################################################
+# create mysql and delete databases
+#########################################################
+
+- name:  Create webServices databases
+  mysql_db:
+    name:         "{% if item.mysql.db_name == 'default' %}{{ item.name }}{% else %}{{item.mysql.db_name}}{% endif %}"
+    collation:    "{% if item.mysql.collation == 'default' %}utf8_general_ci{% else %}{{item.mysql.collation}}{% endif %}"
+    encoding:     "{% if item.mysql.encoding == 'default' %}utf8{% else %}{{item.mysql.encoding}}{% endif %}"
+    state:        present
+  with_items:   "{{ webservices }}"
+  when:
+    - item.enabled | default (true)
+    - item.mysql.enabled | default (false,true)
+
+- name:  delete deactivated databases
+  mysql_db:
+    name:         "{% if item.mysql.db_name is not defined or item.mysql.db_name == 'default' %}{{ item.name }}{% else %}{{item.mysql.db_name}}{% endif %}"
+    state:        absent
+  with_items:   "{{ webservices }}"
+  when:
+    item.mysql is defined and     (
+      ( not item.enabled | default (true) ) or
+      (not item.mysql.enabled | default (false,true) )
+    )
+
+
+
+#########################################################
+# create and delete mysql users
+#########################################################
+# @todo improvement # when deactivating mysql don't delete the DB only the user, use global enable to delete DB
+
+- name: Create webServices mysql users
+  mysql_user:
+    name:           "{% if item.mysql.user == 'default' %}{{ item.name }}{% else %}{{item.mysql.user}}{% endif %}"
+    host:           "localhost"
+    password:       "{{ item.mysql.password }}"
+#    encrypted:    yes
+    priv:           "{% if item.mysql.user == 'default' %}{{ item.name }}.*:ALL{% else %}{{item.mysql.user}}.*:ALL{% endif %}"
+    state:          present
+    append_privs:   no
+#  no_log: true
+  with_items:   "{{ webservices }}"
+  when:
+    - item.enabled | default (true)
+    - item.mysql.enabled | default (false,true)
+
+- name: Delete webServices mysql users
+  mysql_user:
+    name:           "{% if item.mysql.user is not defined or item.mysql.user == 'default' %}{{ item.name }}{% else %}{{item.mysql.user}}{% endif %}"
+    state:        absent
+  with_items:   "{{ webservices }}"
+  when:
+    item.mysql is defined and     (
+      ( not item.enabled | default (true) ) or
+      (not item.mysql.enabled | default (false,true) )
+    )

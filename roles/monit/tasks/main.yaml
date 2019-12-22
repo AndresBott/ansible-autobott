@@ -1,0 +1,88 @@
+---
+#============================================================================================================
+# Monit
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Monit and perform some basic configurations
+#
+#============================================================================================================
+# @tag role_monit # Only run the role monit
+# @todo improvement # add slack integration https://peteris.rocks/blog/monit-configuration-with-slack/
+
+- name: main Monit block
+  tags:
+    - role_monit
+    - untagged
+  when:
+    - run_role_monit is defined
+    - run_role_monit
+  block:
+  - name: Install Monit
+    apt:
+      update_cache: yes
+      name: monit
+      state: latest
+
+  - name: Enable HTTPD
+    template:
+      src: httpd.j2
+      dest: "/etc/monit/conf.d/httpd"
+      owner: "root"
+      group: "root"
+      mode: 0755
+    when: monit_httpd
+    notify: restart monit
+
+  - name: Disable HTTPD
+    file:
+      dest: "/etc/monit/conf.d/httpd"
+      state: absent
+    when: not monit_httpd
+    notify: restart monit
+
+  - name: Set daemon global settings
+    template:
+      src: daemon.j2
+      dest: "/etc/monit/conf.d/global"
+      owner: "root"
+      group: "root"
+      mode: 0644
+    notify: restart monit
+
+  - name: Set email settings
+    template:
+      src: email.j2
+      dest: "/etc/monit/conf.d/email"
+      owner: "root"
+      group: "root"
+      mode: 0600
+    notify: restart monit
+
+  - name: create available checks in /etc/monit/conf-available
+    template:
+      src: check.j2
+      dest: "/etc/monit/conf-available/{{ item.name }}.ansible"
+      owner: "root"
+      group: "root"
+      mode: 0644
+    with_items: "{{ monit_checks }}"
+    notify: restart monit
+
+  - name: Create link to active checks in /etc/monit/conf-enabled
+    file:
+      src:          "/etc/monit/conf-available/{{ item.name }}.ansible"
+      dest:         "/etc/monit/conf-enabled/{{ item.name }}.ansible"
+      state:        link
+    with_items: "{{ monit_checks }}"
+    notify: restart monit
+    when:
+      - item.enabled | default (true)
+
+  - name: Delete link to active checks in /etc/monit/conf-enabled
+    file:
+      path:         "/etc/monit/conf-enabled/{{ item.name }}.ansible"
+      state:        absent
+    with_items: "{{ monit_checks }}"
+    notify: restart monit
+    when:
+      (not item.enabled | default (true) )
+

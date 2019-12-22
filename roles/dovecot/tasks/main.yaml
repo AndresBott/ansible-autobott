@@ -1,0 +1,137 @@
+---
+#============================================================================================================
+# Dovecot
+#============================================================================================================
+# @todo blocker # delete after 6 months rule
+# @tag role_dovecot # Only run this role
+# @action # Install dovecot
+- name: main block
+  tags:
+    - role_dovecot
+    - untagged
+  when:
+    - run_role_dovecot is defined
+    - run_role_dovecot
+  block:
+
+  - name: install required packages
+    apt:
+      name:
+        - dovecot-mysql
+        - dovecot-pop3d
+        - dovecot-imapd
+        - dovecot-lmtpd
+        - dovecot-managesieved
+      state: present
+      update_cache: yes
+
+# =================================================================
+# configure
+# =================================================================
+
+# @action # configure dovecot in /etc/dovecot/conf.d/
+  - name: configure dovecot
+    template:
+      src: conf.d/{{ item }}.j2
+      dest: /etc/dovecot/conf.d/{{ item }}
+    with_items:
+      - auth-sql.conf.ext
+      - 10-auth.conf
+      - 10-mail.conf
+      - 15-lda.conf
+      - 10-master.conf
+      - 10-ssl.conf
+      - 10-logging.conf
+      - 20-lmtp.conf
+      - 20-imap.conf
+      - 15-mailboxes.conf
+      - 90-sieve.conf
+    notify: restart Dovecot
+
+  - name: Configure SQL access configuration in /etc/dovecot/dovecot-sql.conf.ext
+    template:
+      src: dovecot-sql.conf.ext.j2
+      dest: /etc/dovecot/dovecot-sql.conf.ext
+      owner: root
+      group: root
+      mode: 0640
+    notify: restart Dovecot
+
+  - name: Fixing ownership and mode of dovecot.conf
+    file:
+      path: /etc/dovecot/dovecot.conf
+      group: "{{ email_data_group }}"
+      mode: 0644
+    notify: restart Dovecot
+
+# =================================================================
+# Sieve
+# =================================================================
+# @action # Configue sieve mail filtering
+  - name: Create directory for global sieve-after scripts
+    file:
+      path: "{{email_data_dir}}/sieve-after"
+      state: directory
+      owner: "{{email_data_user}}"
+      group: "{{email_data_group}}"
+      mode: 0755
+
+  - name: Create global sieve-after script to send spam to its mail folder
+    copy:
+      src: spam-to-folder.sieve
+      dest: "{{email_data_dir}}/sieve-after/spam-to-folder.sieve"
+    notify: recompile sieve script
+
+# =================================================================
+# Virtual Folders
+# =================================================================
+# @action # Configure dovecot virtual directories
+  - name: virtual folders
+    block:
+
+    - name: Create virtual Maildir
+      file:
+        path: "{{ email_data_dir }}/virtual"
+        state: directory
+        owner: "{{ email_data_user }}"
+        group: "{{ email_data_group }}"
+
+    - name: Create virtual Maildir
+      file:
+        path: "{{ email_data_dir }}/virtual/{{ item }}"
+        state: directory
+        owner: "{{ email_data_user }}"
+        group: "{{ email_data_group }}"
+      with_items: "{{ dovecot_virtual_folders }}"
+
+    - name: Copying virtual Filter Files
+      copy:
+        src: virtual/{{ item }}
+        dest: "{{ email_data_dir }}/virtual/{{ item }}/dovecot-virtual"
+        owner: "{{ email_data_user }}"
+        group:  "{{ email_data_group }}"
+      with_items: "{{ dovecot_virtual_folders }}"
+
+    when: dovecot_virtual_folders != False
+
+# =================================================================
+# Quotas
+# =================================================================
+# @action # configure dovecot quotas
+  - name: Copying quotas config (90-quota.conf)
+    template:
+      src: conf.d/90-quota.conf.j2
+      dest: /etc/dovecot/conf.d/90-quota.conf
+    when:  dovecot_quota_enabled | default(false,true)
+    notify: restart Dovecot
+
+  - name: Copying quota warning script to /usr/local/bin/quota-warning.sh
+    template:
+      src: quota-warning.sh.j2
+      dest: /usr/local/bin/quota-warning.sh
+      owner: "{{ email_data_user }}"
+      group: "{{ email_data_group }}"
+      mode: 0755
+    when:  dovecot_quota_enabled | default(false,true)
+    notify: restart Dovecot
+

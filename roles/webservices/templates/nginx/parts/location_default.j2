@@ -1,0 +1,4 @@
+# File: parts/location_default.j2
+# autoindex on;
+try_files $uri $uri/ {% if item.0.php.enabled is defined and item.0.php.enabled %}/index.php?$query_string{%  else %}$uri/index.html {% endif %};
+

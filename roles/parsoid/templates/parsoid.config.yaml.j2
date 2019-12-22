@@ -1,0 +1,40 @@
+worker_heartbeat_timeout: 30000
+logging:
+    level: info
+#   level: debug
+
+#metrics:
+#    type: log
+
+services:
+  - module: ../src/lib/index.js
+    entrypoint: apiServiceWorker
+    conf:
+        #userAgent: 'My-User-Agent-String'
+
+        # Configure Parsoid to point to your MediaWiki instances.
+        mwApis:
+
+{% for parsoid_service in parsoid_services %}
+{% if parsoid_service.api_uri is defined and  parsoid_service.namespace is defined%}
+
+            - # This is the only required parameter,
+                uri: '{{ parsoid_service.api_uri }}'
+                domain: '{{ parsoid_service.namespace }}'
+                #proxy:
+                #    uri: 'http://my.proxy:1234/'
+                #    headers:  # optional
+                #        'X-Forwarded-Proto': 'https'
+{% endif %}
+{% endfor %}
+
+        # Allow override of port/interface:
+        serverPort: {{ parsoid_port }}
+
+        serverInterface: '{{ parsoid_bind_ip }}'
+
+        # see https://git.andresbott.com/Ansible/ans_webservices/issues/4
+        #on 2018/06/18 i enabled strictAcceptCheck: false on /etc/mediawiki/parsoid/config.yaml
+        #due to incompatibility of visual editor 1.30 and parsoid 0.9
+        #strictAcceptCheck: false
+

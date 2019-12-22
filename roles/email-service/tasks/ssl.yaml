@@ -1,0 +1,31 @@
+---
+#============================================================================================================
+# SSL
+#============================================================================================================
+
+- name: Create ssl live directory
+  file:
+    path:         "{{ email_data_dir }}/ssl/{{ email_server_domain }}/live/"
+    state:        directory
+    owner:        "{{ email_data_user }}"
+    group:        "{{ email_data_group }}"
+    mode:         0750
+
+# ==========================================================================================================
+# Self Signed SSL
+# ==========================================================================================================
+- name: Generate SSL if config enabled
+  include_tasks: ssl_selfsigned.yaml
+  when:
+    - email_cert_provider != "letsencrypt"
+
+
+#============================================================================================================
+# Let's encrypt
+#============================================================================================================
+- name: Generate Letsencrypt SSL, if enabled
+  include_tasks: ssl_letsencrypt.yaml
+  when:
+    - email_cert_provider == "letsencrypt"
+
+

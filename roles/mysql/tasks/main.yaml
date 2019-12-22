@@ -1,0 +1,51 @@
+
+---
+#============================================================================================================
+# Mysql
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install mysql and perform some basic configurations,
+# inspired in geerlingguy/ansible-role-mysql (MIT)
+#
+#============================================================================================================
+
+# @todo: improvement # add memory settings parameters
+# @tag role_mysql # run only this role
+
+- name: Main Mysql block
+  when:
+    - run_role_mysql
+  tags:           ['role_mysql',"untagged"]
+  block:
+
+    # debian : stretch
+    # ubuntu: bionic
+    - name: Load variables based on distro relese
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution_release }}.yaml"
+
+    - include_tasks:  install.yaml
+
+    - include_tasks:  configure.yaml
+
+    - include_tasks:  secure-installation.yaml
+
+    - name: Ensure MySQL databases are present.
+      mysql_db:
+        name: "{{ item.name }}"
+        collation: "{{ item.collation | default('utf8_general_ci') }}"
+        encoding: "{{ item.encoding | default('utf8') }}"
+        state: present
+      with_items: "{{ mysql_databases }}"
+
+    - name: Ensure MySQL users are present.
+      mysql_user:
+        name: "{{ item.name }}"
+        host: "{{ item.host | default('localhost') }}"
+        password: "{{ item.password }}"
+        priv: "{{ item.priv | default('*.*:USAGE') }}"
+        state: "{{ item.state | default('present') }}"
+        append_privs: "{{ item.append_privs | default('no') }}"
+      with_items: "{{ mysql_users }}"
+      no_log: true
+

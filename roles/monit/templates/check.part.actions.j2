@@ -1,0 +1,17 @@
+{% if item.start is defined %}
+    start program = "{{ item.start }}"
+{% endif %}
+{% if item.stop is defined %}
+    stop program = "{{ item.stop }}"
+{% endif %}
+{% if item.restart is defined %}
+    restart program = "{{ item.restart }}"
+{% endif %}
+{% if item.restart_tolerancy is defined %}
+    if does not exist for {{ item.restart_tolerancy }} cycles then restart
+{% endif %}
+{% if item.additional_conditions is defined %}
+{% for item in item.additional_conditions %}
+    {{ item }}
+{% endfor %}
+{% endif %}

@@ -1,0 +1,26 @@
+---
+- name: restart nginx
+  service: name=nginx state=restarted
+  listen:
+    - "restart web server"
+
+- name: reload nginx
+  service: name=nginx state=reloaded
+
+- name: restart php7fpm
+  service:
+    name: "php{{ php_vers }}-fpm"
+    state: restarted
+  listen: "restart web server"
+  when: php_vers != ""
+
+- name: "Reload systemd"
+  shell: "systemctl daemon-reload"
+
+- name: "Restart gitea"
+  service: name=gitea state=restarted
+  listen:
+    - "restart gitea server"
+
+- name: Restart Parsoid
+  service: name=parsoid state=restarted

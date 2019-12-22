@@ -1,0 +1,41 @@
+---
+#============================================================================================================
+# Nginx
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install NodeJS From nodesource repositories
+#
+#============================================================================================================
+# @tag role_nodejs # Only run the role nodejs
+
+- name: main nodejs block
+  tags:
+    - role_nodejs
+    - untagged
+  when: run_role_nodejs
+  block:
+
+  - name: make sure apt-transport-https is installed
+    apt:
+      update_cache: yes
+      name: apt-transport-https
+      state: present
+
+  - name: Add Nodejs nodesource ppa key
+    apt_key:
+#      url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+      data:  "{{ lookup('file', 'nodesource.gpg.key') }}"
+      id: "9FD3B784BC1C6FC31A8A0A1C1655A0AB68576280"
+      state: present
+
+  - name: "Add Nodejs nodesource ppa based on: https://github.com/nodesource/distributions/tree/master/deb"
+    template:
+      src: nodejs.source.list.j2
+      dest: /etc/apt/sources.list.d/nodejs_nodesource_ppa.list
+    register: sources_list_changed
+
+  - name: Install the latest Node from the configured branch
+    apt:
+      update_cache: yes
+      name: nodejs
+      state: latest
+

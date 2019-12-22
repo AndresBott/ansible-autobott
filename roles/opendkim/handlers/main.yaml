@@ -1,0 +1,3 @@
+- name: restart Opendkim
+  service: name=opendkim state=restarted
+  listen: "restart postfix and opendkim"

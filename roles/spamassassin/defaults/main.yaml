@@ -1,0 +1,44 @@
+---
+#============================================================================================================
+# Spamassassin
+#============================================================================================================
+# @var run_role_spamassassin: yes # flag to disable the role
+run_role_spamassassin: yes
+
+# @var spamassasin_required_score: 2.5
+spamassasin_required_score: 2.5
+
+# @var spamassasin_use_bayes: 1 # enable bayesian filter
+spamassasin_use_bayes: 1 # enable bayesian filter
+
+# @var spamassasin_bayes_auto_learn: 1 # enable bayesian auto learn
+spamassasin_bayes_auto_learn: 1 # enable bayesian auto learn
+
+# @var spamassasin_scores: [] # disc of rules and weight values, see: http://spamassassin.apache.org/old/tests_3_3_x.html
+spamassasin_scores:
+  DKIM_SIGNED: 1.0
+  DKIM_VALID: -1.5
+# @example #
+#spamassasin_scores:
+#  DKIM_SIGNED: 1.0
+#  DKIM_VALID: -1.5
+
+
+# @var spamassasin_whitelist_patterns: [] # use white list patterns like: "friend@somewhere.com", "*@isp.com",
+# or "*.domain.net", make sure that they have valid dkim and spf entries
+spamassasin_whitelist_patterns:
+  - "*@austrialpin.at"
+  - "*@*.example.com"
+# @example #
+#spamassasin_whitelist_patterns:
+#  - "*@austrialpin.at"
+#  - "*@*.example.com"
+
+# @var spamassasin_bayes_coron: {hour:4,minute:0} # specify when sa learn will run
+spamassasin_bayes_cron:
+  hour: 4
+  minute: 0
+# @example #
+#spamassasin_bayes_cron:
+#  hour: 4
+#  minute: 0

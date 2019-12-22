@@ -1,0 +1,13 @@
+# File: parts/logs.j2
+{% if item.1.log_access is defined and item.1.log_access %}
+    access_log /var/log/nginx/{{ item.0.name }}.access.log;
+{% else  %}
+    access_log off;
+{% endif %}
+{% if (item.1.log_errors is defined and item.1.log_errors )or item.1.log_errors is not defined%}
+    error_log /var/log/nginx/{{ item.0.name }}.error.log;
+{% else  %}
+    error_log off;
+{% endif %}
+
+{# add this j2 comment to persist the empty line#}

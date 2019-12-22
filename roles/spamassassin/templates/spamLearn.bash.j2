@@ -1,0 +1,138 @@
+#!/bin/bash
+
+function learn {
+
+    # type of learning
+    if  [ $1 == "HAM" ]; then
+        TYPE="HAM"
+        ITEMS=("${HAM[@]}")
+    elif [ $1 == "SPAM" ]; then
+        TYPE="SPAM"
+        ITEMS=("${SPAM[@]}")
+    else
+        echo "wrong learn type ( spam / ham), exit"
+        exit
+    fi
+
+    if  [ $2 == 0 ]; then
+        FULL_LEARN=0
+    elif [ $2 == 1 ]; then
+        FULL_LEARN=1
+    else
+        echo "wrong learn type (incremental / full ), exit"
+        exit
+    fi
+
+    # loop over items
+    for i in ${ITEMS[@]}; do
+        #echo ${i}
+
+        if [ ${i} == "INBOX" ]; then
+            DIR="cur"
+        else
+            DIR=${i}
+        fi
+
+        #find $MAILDIR
+        DIRS=`find $MAILDIR -maxdepth 1 -type d | grep $DIR`
+
+        for j in ${DIRS[@]}; do
+            if [ -e ${j} ]; then
+                chmod 750 -R "${j}"
+
+                # change -old days in case of full learn
+                if  [ $FULL_LEARN == 1 ]; then
+                    echo "learning $TYPE from ${j}: All files"
+                    DAYSOLD="-36500"
+                else
+                    echo "learning $TYPE from ${j} older than $DAYSOLD days"
+                fi
+
+                find "${j}" -type f -mtime $DAYSOLD -print0 | while IFS= read -r -d $'\0' line; do
+                    R=`realpath $line`
+                    #echo "$R"
+
+                    if [[ ${R##*/} =  doveco* ]]; then
+                        # filter out files starting with "dovecot"
+                        #echo  ${R##*/}
+                        continue
+                    else
+                        if [ $TYPE == "HAM" ]; then
+                            su - $SPAMUSER -s /bin/bash -c "sa-learn --no-sync --ham $R"
+#                            echo "#su - $SPAMUSER -c \"sa-learn --no-sync --ham $R\""
+                        elif [ $TYPE == "SPAM" ]; then
+                            su - $SPAMUSER -s /bin/bash -c "sa-learn --no-sync --ham $R"
+#                            echo "#su - $SPAMUSER -c \"sa-learn --no-sync --spam $R\""
+                        fi
+                    fi
+                done
+            fi
+        done
+    done
+} # end of function
+
+
+# if this files does not exist, do a full spam learn
+FULL_LEARN_FILE_FLAG=full-learn-done
+
+# vmail sytem user
+SPAMUSER={{ email_data_user }}
+
+# if doing an incremental learn, how old are the files to check
+DAYSOLD=-2
+
+# basedir for all email accounts
+BASEDIR={{email_data_dir}}/maildirs
+
+# if this files does not exist, do a full spam learn
+FULL_LEARN_FILE_FLAG=full-learn-done
+
+FULL_LEARN_FILE_FLAG_PATH="{{email_data_dir}}/$FULL_LEARN_FILE_FLAG"
+
+
+if [ -f $FULL_LEARN_FILE_FLAG_PATH ]; then
+    echo "Incremental learn"
+    FULL_LEARN=0
+else
+    echo "Full learn"
+    FULL_LEARN=1
+fi
+
+{% for item in email_accounts %}
+{% if item.active is defined %}
+
+echo "Learning bayesian filters for account: {{ item.email }}"
+EMAILDOMAIN={{ item.email.split('@')[1] | lower }}
+EMAILLOCAL={{ item.email.split('@')[0] | lower }}
+
+{% if item.ham_folder is defined %}
+HAM=({% for d in item.ham_folder %}"{{d}}" {% endfor %})
+{% else %}
+HAM=()
+{% endif %}
+
+{% if item.spam_folder is defined %}
+SPAM=({% for d in item.spam_folder %}"{{d}}" {% endfor %})
+{% else %}
+SPAM=()
+{% endif %}
+MAILDIR="$BASEDIR/$EMAILDOMAIN/$EMAILLOCAL/Maildir"
+
+learn HAM $FULL_LEARN
+learn SPAM  $FULL_LEARN
+
+{% endif %}
+{% endfor %}
+
+echo "";
+echo "syncing...";
+sa-learn --sync
+
+# create the flag file after finishing spam execution
+if [ -f $FULL_LEARN_FILE_FLAG_PATH ]; then
+   FULL_LEARN=0
+else
+  touch $FULL_LEARN_FILE_FLAG_PATH
+  FULL_LEARN=1
+fi
+

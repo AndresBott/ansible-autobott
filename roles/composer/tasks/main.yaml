@@ -1,0 +1,72 @@
+---
+#============================================================================================================
+# PHP Composer
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Ansible role to install PHP Composer from getcomposer.org
+#
+#============================================================================================================
+
+# @tag role_composer # Only run the role php composer
+- name: composer block
+  tags:           ['role_composer',"untagged"]
+  when:
+    - run_role_composer is defined
+    - run_role_composer
+  block:
+
+# @action install # install composer from getcomposer.org
+  - name: Check if php is installed
+    stat:
+      path: "/usr/bin/php"
+    register: php_stat_result
+
+  - fail:
+      msg: "PHP (/usr/bin/php) is not present, this is needed to install composer"
+    when: php_stat_result.stat.exists == False
+
+  - name: install composer
+    when: php_stat_result.stat.exists == True
+    block:
+
+    - name: check if composer is already installed
+      stat:
+        path: "/usr/local/bin/composer"
+      register: php_composer_result
+
+    - name: download composer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/composer-installer
+      when: php_composer_result.stat.exists == False
+
+    - name: install composer
+      shell: cat /tmp/composer-installer | php -- --install-dir=/usr/local/bin
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: delete /tmp/installer
+      file:
+        path: /tmp/composer-installer
+        state: absent
+
+    - name: rename composer.phar to composer
+      shell: mv /usr/local/bin/composer.phar /usr/local/bin/composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: make composer executable
+      file:
+        path: /usr/local/bin/composer
+        mode: a+x
+        state: file
+
+# @action uninstall # uninstall composer if run_role_composer is set to no / false
+- name: uninstall composer
+  when: not run_role_composer
+  tags:           ['role_composer',"untagged"]
+  block:
+
+    - name: delete /usr/local/bin/composer
+      file:
+        path: /usr/local/bin/composer
+        state: absent

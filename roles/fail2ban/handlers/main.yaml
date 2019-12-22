@@ -1,0 +1,15 @@
+---
+- name: start fail2ban
+  become: true
+  service:
+    name: fail2ban
+    state: started
+
+
+- name: restart fail2ban
+  become: true
+  service:
+    name: fail2ban
+    state: restarted
+
+

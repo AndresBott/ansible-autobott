@@ -1,0 +1,11 @@
+---
+- name: restart minio
+  become: true
+  service: name=minio state=restarted
+
+- name: stop minio
+  become: true
+  service: name=minio state=stopped
+
+- name: "Reload systemd"
+  shell: "systemctl daemon-reload"

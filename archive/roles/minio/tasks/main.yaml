@@ -1,0 +1,139 @@
+---
+#============================================================================================================
+# Minio
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Minio and perform some basic configurations
+#
+#============================================================================================================
+
+- name: main Minio block
+  tags:
+    - role_minio
+    - untagged
+  when:
+    - run_role_minio is defined
+    - run_role_minio
+    - not minio_uninstall
+  block:
+
+  - name: System group
+    group:
+      name: "{{ minio_group }}"
+      gid: "{{ minio_gid | default(omit, true) }}"
+
+  - name: Create user for minio
+    user:
+      name: "{{ minio_user }}"
+      uid:  "{{ minio_uid | default(omit, true) }}"
+      group: "{{ minio_group }}"
+      home:  "{{ minio_dir }}"
+      create_home: no
+
+  - name: "Create dirs"
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ minio_user }}"
+      group: "{{ minio_group }}"
+      mode: 0750
+    with_items:
+      - "{{ minio_dir }}"
+      - "{{ minio_data_dir }}"
+      - "{{ minio_dir }}/minio-binaries"
+
+  - name: "Download minio binary"
+    get_url:
+      url: "{{ minio_sources[minio_current_version].url }}"
+      sha256sum: "{{ minio_sources[minio_current_version].sha256sum }}"
+      dest: "{{ minio_dir }}/minio-binaries/minio-{{ minio_current_version }}"
+      owner: "{{ minio_user }}"
+      group: "{{ minio_group }}"
+      mode: 0750
+    notify: "restart minio"
+
+  - name: link minio
+    file:
+      src: "{{ minio_dir }}/minio-binaries/minio-{{ minio_current_version }}"
+      dest: "{{ minio_dir }}/minio-binaries/minio-latest"
+      state: link
+    notify: "restart minio"
+
+  - name: "Download minio client"
+    get_url:
+      url: "{{ minio_client_sources[minio_client_current_version].url }}"
+      sha256sum: "{{ minio_client_sources[minio_client_current_version].sha256sum }}"
+      dest: "{{ minio_dir }}/minio-binaries/mc-{{ minio_client_current_version }}"
+      owner: "{{ minio_user }}"
+      group: "{{ minio_group }}"
+      mode: 0750
+    when: minio_install_client
+
+  - name: link minio client
+    file:
+      src: "{{ minio_dir }}/minio-binaries/mc-{{ minio_client_current_version }}"
+      dest: /usr/local/bin/minio-client
+      state: link
+    when: minio_install_client
+
+  - name: "Setup systemd service"
+    template:
+      src: minio.service.j2
+      dest: /lib/systemd/system/minio.service
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - "Reload systemd"
+      - "restart minio"
+
+  - name: "Enable systemd service"
+    systemd:
+      name: minio
+      enabled: yes
+      daemon_reload: yes
+    notify:
+      - "Reload systemd"
+      - "restart minio"
+
+
+- name: uninstall Minio
+  tags:
+    - role_minio
+    - untagged
+  when:
+    - run_role_minio is defined
+    - run_role_minio
+    - minio_uninstall
+  block:
+
+  - name: "disable systemd service"
+    systemd:
+      name: minio
+      enabled: no
+      daemon_reload: yes
+    notify:
+      - "stop minio"
+      - "Reload systemd"
+
+  - name: Aplly handlers now
+    meta: flush_handlers
+
+  - name: "Delete dirs"
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ minio_dir }}/minio-binaries"
+
+  - name: Remove system user for minio
+    user:
+      name: "{{ minio_user }}"
+      state: absent
+      remove: no
+
+  - name: remove System group
+    group:
+      name: "{{ minio_group }}"
+      state: absent
+
+

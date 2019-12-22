@@ -1,0 +1,9 @@
+---
+#============================================================================================================
+# NodeJs
+#============================================================================================================
+
+# @var run_role_nodejs: yes # flag to disable the role
+run_role_nodejs: yes
+# @var nodejs_version_repo: 11 | {8,9,10,11} # select the major version of nodejs you want to install; available versions based on https://github.com/nodesource/distributions/tree/master/deb
+nodejs_version_repo: 10  # 8 | 9 | 10 | 11

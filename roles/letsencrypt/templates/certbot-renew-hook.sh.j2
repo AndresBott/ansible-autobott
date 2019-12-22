@@ -1,0 +1,17 @@
+#!/bin/sh
+
+{% if letsencrypt_renew_email != "" %}
+
+/usr/sbin/sendmail "{{ letsencrypt_renew_email }}" <<EOF
+subject:Letsencrypt Certificate renew
+from: letsencrypt-renew@{{  ansible_fqdn }}
+
+Certificates on {{ inventory_hostname }} have been renewed and Nginx reloaded (I hope).
+$domain
+
+
+EOF
+
+exit 0
+{% endif %}
+

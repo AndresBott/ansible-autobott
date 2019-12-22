@@ -1,0 +1,14 @@
+---
+
+- name: Check for users with empty password
+  shell: >
+    mysql -NBe
+    "select user, host from mysql.user where user like '';"
+  changed_when: false
+  register: mysql_check_empty_passwd
+
+- name: Users with empty password
+  debug:
+    msg: "WARN: The users {{ mysql_check_empty_passwd.stdout_lines }} have empty passwords"
+  changed_when: true
+  when: mysql_check_empty_passwd.stdout_lines | length > 0

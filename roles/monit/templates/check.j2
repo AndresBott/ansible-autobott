@@ -1,0 +1,31 @@
+{#===========================================================================================================
+# Process
+===========================================================================================================#}
+{% if item.type == "process" %}
+# check process for {{ item.name }}
+{% if item.pid is defined %}
+check process {{ item.name }} with PIDFILE {{ item.pid }}
+{% include  'check.part.actions.j2' %}
+{% elif item.regex is defined %}
+check process {{ item.name }} MATCHING {{ item.regex }}
+{% include  'check.part.actions.j2' %}
+{% else %}
+# No proper check defined in ansible configuration for this service
+# configure either pid or regex https://mmonit.com/monit/documentation/monit.html#Service-checks
+{% endif %}
+{% endif %}
+{#===========================================================================================================
+# Disk
+===========================================================================================================#}
+{% if item.type == "disk" %}
+# check disk for {{ item.name }}
+{% if item.path is defined %}
+check filesystem {{ item.name }} with path {{ item.path }}
+{% include  'check.part.actions.j2' %}
+{% else %}
+# No proper check defined in ansible configuration for this service
+# configure either pid or regex https://mmonit.com/monit/documentation/monit.html#Service-checks
+{% endif %}
+{% endif %}
+
+

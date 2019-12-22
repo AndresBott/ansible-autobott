@@ -1,0 +1,8 @@
+#A key table contains each selector/domain pair and the path to their private
+#key. Any alphanumeric string can be used as a selector, in this example mail
+#is used and it's not necessary to change it.
+
+{% for d in email_domains %}
+_dkim.{{  d.domain }}       {{  d.domain }}:dkim.{{  d.domain }}:/etc/opendkim/keys/dkim.{{  d.domain }}.private
+{% endfor %}
+

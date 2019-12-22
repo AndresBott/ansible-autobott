@@ -1,0 +1,18 @@
+---
+#============================================================================================================
+# Postfix
+#============================================================================================================
+# @var run_role_postfix: yes # flag to disable the role
+run_role_postfix: yes
+
+# @var postfix_postgrey: no # Install and configure postgrey greylisting
+postfix_postgrey: no
+
+# @var postfix_postgrey_port: 10023 # Port for postgrey to listen to
+postfix_postgrey_port: 10023
+
+# @var postfix_postgrey_delay: 60 # the graylisting delay in seconds
+postfix_postgrey_delay: 60
+
+# @var postfix_max_mail_size: 10240000  # The maximal size in bytes of a message, including envelope information.
+postfix_message_size_limit: 10240000

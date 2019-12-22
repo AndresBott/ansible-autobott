@@ -1,0 +1,12 @@
+---
+#============================================================================================================
+# Dovecot
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install and configure Dovecot in Ansible-autobott
+#
+#============================================================================================================
+
+dependencies:
+  - role: email-service
+#    vars:
+#      some_parameter: 3

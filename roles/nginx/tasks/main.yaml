@@ -1,0 +1,105 @@
+---
+#============================================================================================================
+# Nginx
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Nginx and perform some basic configurations
+#
+#============================================================================================================
+# @tag role_nginx # Only run the role nginx
+
+- name: Nginx block
+  tags:   ['role_nginx',"untagged"]
+  block:
+
+  - name: Install Nginx
+    apt:
+      name: "{{ nginx_pgks_to_install }}"
+      state: latest
+      update_cache: yes
+    notify: restart nginx
+
+  - name: Configure nginx
+    template:
+      src: debian.nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify: restart nginx
+
+  # Ensure snippets directory is there
+  - name: Ensure nginx snippets directory is created
+    file:
+      path: /etc/nginx/snippets
+      state: directory
+
+  - name: copy nginx config snippets
+    copy:
+        src: "{{ role_path }}/files/config_snippets/{{ item }}"
+        dest: "/etc/nginx/snippets/{{ item }}"
+        owner: root
+        group: root
+        mode: 0740
+    with_items:
+      - nginx.onlywebrequests.conf
+      - nginx.ssl-params.conf
+
+  - name: Ensure nginx errorcodes directory is created
+    file:
+      path: /etc/nginx/error_codes
+      state: directory
+
+  - name: copy nginx error codes
+    copy:
+        src: "{{ role_path }}/files/error_codes/{{ item }}"
+        dest: "/etc/nginx/error_codes/{{ item }}"
+        owner: root
+        group: root
+        mode: 0555
+    with_items:
+      - custom50x.html
+      - custom404.html
+      - custom418.html
+
+  # copy over the Utility scripts
+  - name: copy files
+    copy:
+        src: "{{ role_path }}/files/nginxensite.sh"
+        dest: /usr/local/sbin/nginxensite
+        owner: root
+        group: root
+        mode: 0740
+
+  ## delete all files from /etc/nginx/modules-enabled
+  - name: Find links to enabled modules
+    find:
+      path: /etc/nginx/modules-enabled
+      file_type: file
+    register: nginx_modules_links
+
+  - name: Delete links to enabled modules
+    file:
+      state: absent
+      path: "{{ item.path }}"
+    with_items: "{{ nginx_modules_links.files }}"
+
+  - name: Create Links to enabled modules
+    file:
+      src: /usr/share/nginx/modules-available/{{ item }}
+      dest: /etc/nginx/modules-enabled/50-{{ item }}
+      state: link
+      owner: root
+      group: root
+      mode: 0777
+    with_items: "{{ nginx_modules }}"
+
+  #https://gist.github.com/plentz/6737338#file-nginx-conf-L57
+  - name: Generate Strong Diffie-Hellman Group to be used in nginx
+    shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+    args:
+      creates: /etc/ssl/certs/dhparam.pem
+
+  - name: make  /etc/ssl/certs/dhparam.pem world readable
+    file:
+      path: /etc/ssl/certs/dhparam.pem
+      state: file
+      owner: root
+      group: root
+      mode: 0644

@@ -1,0 +1,62 @@
+---
+#============================================================================================================
+# SSL
+#============================================================================================================
+
+- name: Create ssl live directory
+  file:
+    path:         "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/"
+    state:        directory
+    owner:        "{{ item.0.name }}"
+    group:        "{{ item.0.name }}"
+    mode:         0750
+  register: webservice_need_run_ssl
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  when:
+    - item.0.enabled
+    - item.0.nginx.enabled
+    - item.1.ssl.type is defined
+    - ( item.1.ssl.type == 'optional'  ) or ( item.1.ssl.type == 'force'  )
+
+- name: verify pyton pyOpenSSL is installed
+  apt:
+    name: "python-openssl"
+    state: latest
+    update_cache: yes
+  when: webservice_need_run_ssl is defined
+
+- name: Generate SSL if config enabled
+  include_tasks: ssl_self_signed.yaml
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  when:
+    - item.0.enabled
+    - item.0.nginx.enabled
+    - item.1.ssl.type is defined
+    - ( item.1.ssl.type == 'optional'  ) or ( item.1.ssl.type == 'force'  )
+
+#============================================================================================================
+# Let's encrypt
+#============================================================================================================
+
+- name: Generate SSL if config enabled
+  include_tasks: ssl_letsencrypt.yaml
+  with_subelements:
+    - "{{ webservices }}"
+    - nginx.servers
+    - flags:
+      skip_missing: True
+  when:
+    - item.0.enabled
+    - item.0.nginx.enabled
+    - item.1.ssl.type is defined
+    - ( item.1.ssl.type == 'optional'  ) or ( item.1.ssl.type == 'force'  )
+    - item.1.ssl.provider == "letsencrypt"
+

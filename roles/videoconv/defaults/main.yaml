@@ -1,0 +1,33 @@
+---
+#============================================================================================================
+# Videoconv
+#============================================================================================================
+# @var run_role_videoconv: yes # Flag to disable the role
+run_role_videoconv: yes
+
+# @var videoconv_user: videoconv # define a user
+videoconv_user: videoconv
+# @var videoconv_uid: no # define a uid for the user
+videoconv_uid: no
+# @var videoconv_group: videoconv # system group
+videoconv_group: videoconv
+# @var videoconv_gid: no # define a gid for the group
+videoconv_gid: no
+
+# @videoconv_dir: "/opt/videoconv" # installation location
+videoconv_dir: "/opt/videoconv"
+
+# @videoconv_input_dir: "/opt/videoconv/data/in" #  videos to be processed
+videoconv_input_dir: "/opt/videoconv/data/in"
+# @videoconv_output_dir: "/opt/videoconv/data/out" # done videos
+videoconv_output_dir: "/opt/videoconv/data/out"
+# @videoconv_tmp_dir: "/opt/videoconv/data/tmp" #  tmp folder
+videoconv_tmp_dir: "/opt/videoconv/data/tmp"
+# @videoconv_ignore_dir: "/opt/videoconv/data/ignore"# ignored videos after an error
+videoconv_ignore_dir: "/opt/videoconv/data/ignore"
+
+
+# @var videoconv_binary: 0.1 # see the releases https://github.com/AndresBott/videoconv/releases
+videoconv_current_version: "0.1.1"
+
+

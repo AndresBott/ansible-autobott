@@ -1,0 +1,12 @@
+
+# File: parts/auth.include.j2
+{% if item.1.authentication is defined and item.1.authentication %}
+    auth_basic   "Autenticate";
+{%      if item.1.htpasswd_filename is defined and item.1.htpasswd_filename %}
+    auth_basic_user_file  "{{ webservices_root }}/{{ item.0.name }}/home_dir/{{ item.1.htpasswd_filename }}";
+{%      else %}
+    auth_basic_user_file  "{{ webservices_root }}/{{ item.0.name }}/home_dir/.htpasswd_{{ item.1.domain }}";
+{%      endif %}
+{% endif %}
+
+{# add athis j2 comment to persist the empty line#}

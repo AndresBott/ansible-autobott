@@ -1,0 +1,13 @@
+{% if fail2ban_postfix %}
+[postfix]
+enabled  = true
+
+[postfix-sasl]
+enabled  = true
+port = smtp,465,submission,imaps,pop3,pop3s
+{% endif %}
+
+{% if fail2ban_postfix %}
+[nginx-http-auth]
+enabled  = true
+{% endif %}

@@ -1,0 +1,129 @@
+---
+#============================================================================================================
+# Validations
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Perform configured validations at the end of the playbook run
+#
+#============================================================================================================
+
+
+# @todo improvement # add validation for sftp login, private key on secret?
+# @todo improvement # add report for password login users?
+# @todo improvement # add report for lets encrypt dry-renew
+#- name: Validate sftp configuration
+- name: Validations main block
+  when: run_role_validation
+  block:
+
+
+# @todo improvement # change package behaviour similar to files with package: <status> [ present | absent | purged]
+# @todo bug # the packages validation currently performs changes, but it should only check
+
+# @action # Packages - Take care of ensuring that defined packages are uninstalled
+# @tag  role_validation # run validations
+# @tag  validation # run validations
+# @tag  validation_packages # run package validations
+  - name: Packages validation
+    tags:
+      - role_validation
+      - validation
+      - validation_packages
+    block:
+
+    - name: Uninstall packages
+      apt:
+        name: "{{ validation_packages_uninstall_group | union( validation_packages_uninstall_host ) }}"
+        state: absent
+
+    - name: Purge packages
+      apt:
+        name: "{{ validation_packages_purge_group | union( validation_packages_pureg_host ) }}"
+        state: absent
+        purge: true
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+#============================================================================================================
+# File validations
+#============================================================================================================
+# @action # Files - Take care of ensuring that defined files are present or absent
+# @tag  validation_files # run file validations
+  - name: Files validation
+    tags:
+      - role_validation
+      - validation
+      - validation_files
+    block:
+
+    - include_tasks: non-existing-file.yaml
+      with_items: "{{ validation_files_group | union( validation_files_host ) }}"
+
+#============================================================================================================
+# shell commands validations
+#============================================================================================================
+# @action # Shell - run shell commands on the host and validated the result
+# @tag  validation_shell # run shell validations
+  - name: Shell validation
+    tags:
+      - role_validation
+      - validation
+      - validation_shell
+    block:
+
+    - include_tasks: shell.yaml
+      with_items: "{{ validation_shell_group | union( validation_shell_host ) }}"
+
+#============================================================================================================
+# hppt validations
+#============================================================================================================
+# @action: # HTTP - run shell commands on the host and validated the result
+# @tag  validation_http # run http validations
+  - name: Http validation
+    tags:
+      - role_validation
+      - validation
+      - validation_http
+    block:
+
+    - include_tasks: http.yaml
+      with_items: "{{ validation_http_group | union( validation_http_host ) }}"
+
+#============================================================================================================
+# email server validations
+#============================================================================================================
+# @action: # HTTP - run shell commands on the host and validated the result
+# @tag  validation_http # run http validations
+  - name: email server validation
+    tags:
+      - role_validation
+      - validation
+      - validation_email
+    block:
+
+    - include_tasks: email.yaml
+      with_items: "{{ validation_email_group | union( validation_email_host ) }}"
+
+
+
+#============================================================================================================
+# Mysql Validations
+#============================================================================================================
+# @action # Mysql - verify there are no users with empty password
+# @tag  validation_mysql # run mysql validations
+  - name: mysql validation
+    tags:
+      - role_validation
+      - validation
+      - validation_mysql
+    block:
+    - name: check if mysql exists
+      command: 'mysql --version'
+      register: mysql_cli_version
+      changed_when: false
+      failed_when: false
+
+    - include_tasks: mysql.yaml
+      when: mysql_cli_version.rc == 0
+
+# @ todo task # add validations for mysql connection

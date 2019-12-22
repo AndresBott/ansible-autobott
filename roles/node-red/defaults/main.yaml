@@ -1,0 +1,25 @@
+---
+#============================================================================================================
+# Node red
+#============================================================================================================
+# @var run_role_nodered: yes # flag to disable the role
+run_role_nodered: yes
+# @var nodered_user: nodered # system user
+nodered_user: nodered
+# @var nodered_uid: no # define a uid for the user
+nodered_uid: no
+# @var nodered_group: nodered # system group
+nodered_group: nodered
+# @var nodered_gid: no # define a gid for the group
+nodered_gid: no
+# @var nodered_dir: /opt/nodered # installation dir
+nodered_dir: /opt/nodered
+# @var nodered_service_name: nodered # systemd service name
+nodered_service_name: nodered
+# @var  nodered_port: 9663 # port to start node-red
+nodered_port: 9663
+# @var nodered_pacakges: [node-red,node-red-dashboard]# node-red packages (not needed to change)
+nodered_pacakges:
+  - node-red
+  - node-red-dashboard
+

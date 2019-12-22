@@ -1,0 +1,208 @@
+---
+#============================================================================================================
+# Gitea
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install gitea with the default configuration
+#
+#============================================================================================================
+# @tag role_gitea # Flag to only run this role
+
+- name: Gitea block
+  tags:
+    - role_gitea
+    - untagged
+  when:
+    - run_role_gitea is defined
+    - run_role_gitea
+  block:
+
+  - name: Install Git
+    apt:
+      name:
+        - git
+      state: present
+      update_cache: yes
+
+  - name: System group gitea
+    group:
+      name: "{{ gitea_user }}"
+
+  - name: Create system user gitea
+    user:
+      name: "{{ gitea_user }}"
+      group: "{{ gitea_user }}"
+      createhome: no
+      system: yes
+
+  - name: "Create gitea dirs"
+    file:
+      path: "{{ gitea_dir }}/{{ folder }}"
+      state: directory
+      owner: "{{ gitea_user }}"
+      group: "{{ gitea_user }}"
+      mode: 0750
+    with_items:
+      - gitea-binaries
+      - config
+    loop_control:
+      loop_var: folder
+
+  - name: "Create gitea data dir(s)"
+    file:
+      path: "{{ gitea_data_dir }}/repositories"
+      state: directory
+      owner: "{{ gitea_user }}"
+      group: "{{ gitea_user }}"
+      mode: 0750
+
+  - name: "Download Gitea binary"
+    get_url:
+      url: "{{ gitea_binary }}"
+      sha256sum: "{{ gitea_sum }}"
+      dest: "{{ gitea_dir }}/gitea-binaries/gitea{{ gitea_version }}"
+      owner: "{{ gitea_user }}"
+      group: "{{ gitea_user }}"
+      mode: 0750
+    notify: "Restart Gitea"
+
+  - name: link gitea
+    file:
+      src: "{{ gitea_dir }}/gitea-binaries/gitea{{ gitea_version }}"
+      dest: /usr/local/bin/gitea
+      state: link
+    notify: "Restart Gitea"
+
+  - name: "Delete old versions"
+    file:
+      path: "{{ gitea_dir }}/gitea-binaries/gitea{{ old_versions }}"
+      state: absent
+    with_items: "{{ gitea_version_delete }}"
+    loop_control:
+      loop_var: old_versions
+
+  # @todo task # add logrotate for gitea
+  - name: "Create folder /var/log/gitea"
+    file:
+      path: "/var/log/gitea"
+      state: directory
+      owner: "{{ gitea_user }}"
+      group: root
+      mode: 0750
+
+
+#============================================================================================================
+# Configure gitea Service
+#============================================================================================================
+
+  - name: "Create Gitea Config"
+    template:
+      src: gitea.app.ini.j2
+      dest: "{{ gitea_dir }}/config/gitea.ini"
+      owner: "{{ gitea_user }}"
+      group: "{{ gitea_user }}"
+      mode: 0750
+    notify: "Restart Gitea"
+
+  - name: "[REPORT]gitea change"
+    debug:
+      msg: "Gitea config will always change when gitea is running, property: INTERNAL_TOKEN"
+
+  - name: "Setup gitea systemd service"
+    template:
+      src: gitea.service.j2
+      dest: /lib/systemd/system/gitea.service
+      owner: root
+      group: root
+      mode: 0644
+    notify: "Reload systemd"
+
+  - name: "Enable gitea systemd service"
+    systemd:
+      name: gitea
+      enabled: yes
+      daemon_reload: yes
+    notify: "Restart Gitea"
+
+  #####################################################
+  # Work on database
+  #####################################################
+#  @todo improvement # delete gitea database on deactivation
+
+  - name: crate mysql database if using mysql
+    when: gitea_db_type == "mysql"
+    block:
+
+    - name:  Create gitea database
+      mysql_db:
+        name:         "{{ gitea_db_user }}"
+        collation:    "utf8_general_ci"
+        encoding:     "utf8"
+        state:        present
+
+    - name: Create gitea mysql user
+      mysql_user:
+        name:           "{{ gitea_db_user }}"
+        host:           "localhost"
+        password:       "{{ gitea_db_pass }}"
+    #    encrypted:    yes
+        priv:           "{{ gitea_db_user }}.*:ALL"
+        state:          present
+        append_privs:   no
+
+    - name: check table exists
+      shell: "mysql --database {{ gitea_db_user }} -e 'show tables;' | grep version"
+      register: dbstatus_gitea_vesrion
+      failed_when: "dbstatus_gitea_vesrion.rc == 2"
+      check_mode: no
+      changed_when: False
+
+    - template: src=gitea.sql.j2 dest=/tmp/gitea.sql
+      when: dbstatus_gitea_vesrion.stdout == ""
+
+    - name: update gitea database
+      mysql_db: name={{ gitea_db_user }} state=import target=/tmp/gitea.sql
+      when: dbstatus_gitea_vesrion.stdout == ""
+
+    - name: Delete temp domain sql files
+      file:
+        path: /tmp/gitea.sql
+        state: absent
+
+
+    ## Create default user
+    - template: src=giteauser.sql.j2 dest=/tmp/gitea.sql
+      when: dbstatus_gitea_vesrion.rc == 1
+
+    - name: update gitea database
+      mysql_db:
+        name: "{{ gitea_db_user }}"
+        state: import
+        target: /tmp/gitea.sql
+      when: dbstatus_gitea_vesrion.rc == 1
+
+    - name: Delete temp domain sql files
+      file:
+        path: /tmp/gitea.sql
+        state: absent
+
+    - debug:
+        msg: "[REPORT] Now you can login with gitea@gitea.com : gitea"
+      when: dbstatus_gitea_vesrion.rc == 1
+
+
+
+
+
+
+#- include_tasks: gitea.yaml
+#  with_items:   "{{ webServices }}"
+#  loop_control:
+#    loop_var: webservice
+#  when:
+#    - webservice.additional_service is defined
+#    - webservice.additional_service.type is defined
+#    - webservice.additional_service.type == "gitea"
+#    - webservice.activated | default (false, true)
+#  tags:
+#    - webservices
+#    - webservices_gitea

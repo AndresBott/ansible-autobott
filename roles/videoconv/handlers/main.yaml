@@ -1,0 +1,7 @@
+---
+- name: restart videoconv
+  become: true
+  service: name=videoconv state=restarted
+
+- name: "Reload systemd"
+  shell: "systemctl daemon-reload"

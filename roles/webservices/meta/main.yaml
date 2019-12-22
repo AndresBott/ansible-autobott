@@ -1,0 +1,13 @@
+---
+#============================================================================================================
+# Webservices
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Ansible role to maintain nginx based webservices, this role glues together all other
+# webservice roles in ansible-autobott project
+#
+#============================================================================================================
+
+dependencies:
+  - role: nginx
+  - role: letsencrypt
+

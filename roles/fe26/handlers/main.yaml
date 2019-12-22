@@ -1,0 +1,7 @@
+---
+- name: restart fe26
+  become: true
+  service: name=fe26 state=restarted
+
+- name: "Reload systemd"
+  shell: "systemctl daemon-reload"

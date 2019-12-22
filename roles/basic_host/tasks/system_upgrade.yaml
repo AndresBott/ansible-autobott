@@ -1,0 +1,19 @@
+
+#============================================================================================================
+# System upgrade
+#============================================================================================================
+- name: System upgrade
+  tags:           ['never','upgrade','action_upgrade']
+  block:
+
+  - name: update apt-cache
+    apt:
+      update_cache: yes
+      cache_valid_time: 0
+    changed_when: false
+    ignore_errors: '{{ ansible_check_mode }}'
+
+  - name: upgrade server
+    apt:  upgrade=full
+    ignore_errors: '{{ ansible_check_mode }}'
+

@@ -1,0 +1,20 @@
+---
+#============================================================================================================
+# Parsoid
+#============================================================================================================
+
+# @var run_role_parsoid: yes # flag to disable the role
+run_role_parsoid: yes
+
+# @var parsoid_services: [] # list of different services that will connect to this parsoid instance
+parsoid_services: []
+# @example #
+#parsoid_services:
+#  - name: wiki1     # used to identify the different wiki installations
+#    api_uri:        # url to listen to
+#    namespace:      # the mediawiki namespace (domain)
+
+# @var parsoid_port: 8142 # parsoind port
+parsoid_port: 8142
+# @var  parsoid_bind_ip: '127.0.0.1' # parsoind listen ip address
+parsoid_bind_ip: '127.0.0.1'

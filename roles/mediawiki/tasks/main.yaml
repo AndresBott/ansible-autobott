@@ -1,0 +1,17 @@
+---
+#============================================================================================================
+# Mediawiki
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: install multiple amount of mediawiki instances
+
+#============================================================================================================
+# @tag  role_mediawiki # Flag to only run this role
+- block:
+  - include_tasks: mediawiki.yaml
+    with_items:   "{{ mediawiki_instances }}"
+    loop_control:
+      loop_var: wiki
+    when: run_role_mediawiki
+
+  tags:
+    - role_mediawiki

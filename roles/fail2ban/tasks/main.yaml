@@ -1,0 +1,34 @@
+---
+#============================================================================================================
+# Fai2ban
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install fail2ban with the default configuration
+#
+#============================================================================================================
+# @tag  role_fail2ban # Only run the role fail2ban
+# @todo improvement # add fai2ban for postfix and imap login attempts
+- name: fail2ban block
+  tags:
+    - role_fail2ban
+    - untagged
+  when:
+    - run_role_fail2ban is defined
+    - run_role_fail2ban
+
+  block:
+  - name: Install fail2ban
+    apt:
+      name:
+        - fail2ban
+      state: present
+      update_cache: yes
+      install_recommends: no
+    notify: start fail2ban
+
+  - name: configure /etc/fail2ban/jail.local
+    template:
+      src: jail.local.j2
+      dest: /etc/fail2ban/jail.local
+    notify: restart fail2ban
+
+

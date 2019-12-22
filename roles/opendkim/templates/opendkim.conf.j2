@@ -1,0 +1,33 @@
+AutoRestart             Yes
+AutoRestartRate         10/1h
+UMask                   002
+Syslog                  yes
+SyslogSuccess           Yes
+LogWhy                  Yes
+ReportAddress           {{ email_postmaster }}
+
+Canonicalization        relaxed/simple
+
+ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
+InternalHosts           refile:/etc/opendkim/TrustedHosts
+KeyTable                refile:/etc/opendkim/KeyTable
+SigningTable            refile:/etc/opendkim/SigningTable
+
+Mode                    sv
+PidFile                 /var/run/opendkim/opendkim.pid
+SignatureAlgorithm      rsa-sha256
+
+UserID                  opendkim:opendkim
+
+## http://unix.stackexchange.com/questions/351584/how-to-configure-the-socket-for-opendkim-on-debian-testing-stretch
+## if you define a socket, the config is not take in care and, the soket will be created in  /var/run/opendkim/opendkim.sock
+#Socket                  inet:12301@localhost
+{% if opendkim_socket == "unix" %}
+Socket                  local:{{ opendkim_socket_location }}
+{% elif opendkim_socket == "inet" %}
+Socket                  inet:{{ opendkim_port }}@localhost
+{% endif %}
+
+
+
+

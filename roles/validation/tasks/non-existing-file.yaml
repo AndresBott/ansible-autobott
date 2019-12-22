@@ -1,0 +1,32 @@
+---
+- name: get file stat
+  stat:
+    path: "{{ item.path }}"
+  register: stat_result
+
+#- name: print stat_result
+#  debug:
+#    var:  stat_result
+
+# check for absent files
+- name: "[REPORT] Item should NOT exist"
+  debug:
+    msg: "WARN item: {{item.path}} does exist, but should NOT"
+  changed_when: true
+  when:
+    - '"absent" in item.condition'
+    - stat_result.stat.exists == True
+
+# check for present files
+- name: "Item should exist"
+  debug:
+    msg: "WARN item: {{item.path}} does NOT exist, but should exists"
+  changed_when: true
+  when:
+    - '"present" in item.condition'
+    - stat_result.stat.exists == False
+
+
+
+
+

@@ -1,0 +1,12 @@
+# File: parts/documentroot.j2
+{% if item.1.document_root is not defined or item.1.document_root != False %}
+{%      if item.1.document_root is not defined or item.1.document_root == "default" %}
+    root "{{ webservices_root }}/{{ item.0.name }}/home_dir/public_html";
+{%      elif item.1.document_root[0] == "/" %}
+    root "{{ item.1.document_root }}";
+{%      else %}
+    root "{{ webservices_root }}/{{ item.0.name }}/home_dir/{{ item.1.document_root }}";
+{%      endif %}
+{% endif %}
+
+{# add athis j2 comment to persist the empty line#}

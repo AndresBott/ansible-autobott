@@ -1,0 +1,81 @@
+---
+#============================================================================================================
+# Sources.list
+#============================================================================================================
+- name: Enroll system block
+  tags:           ['role_basic_host','configuration',"untagged"]
+  block:
+
+  - name: "FIX: Install apt-transport-https"
+    raw: apt-get update && apt-get install apt-transport-https -y
+    become: true
+    changed_when: false
+
+  - name: Overwrite sources.list to a provided one
+    template:
+      src: sources.list.{{ ansible_distribution_release }}.j2
+      dest: /etc/apt/sources.list
+      owner: root
+      group: root
+      mode: 0664
+    failed_when: false
+    register: basic_host_sources_list_changed
+#    when:     basic_host_sources_distro_name != ""
+
+  - name: Force apt-cache after source change
+    apt:
+      update_cache: yes
+      cache_valid_time: 0
+    when: basic_host_sources_list_changed.changed
+    changed_when: false
+    ignore_errors: '{{ ansible_check_mode }}'
+
+  - name: Update apt-cache if too old
+    apt:
+      update_cache: yes
+      cache_valid_time: "{{ basic_host_cache_valid_time }}"
+    changed_when: false
+    ignore_errors: '{{ ansible_check_mode }}'
+
+  # Take care of sources.list.d
+  - name: Add extra repositories in Apt signing key
+    apt_key:
+      url: "{{ item.key_url }}"
+      id: "{{ item.key_id | default(omit) }}"
+      state: present
+    with_items: "{{ basic_host_sources_d }}"
+    when:
+      - item.enabled | default (true)
+      - item.key_url is defined
+      - item.key_url != ""
+
+  - name: Add extra repositories in sources.list.d
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: present
+      filename: "{{ item.name }}"
+      update_cache: yes
+    with_items: "{{ basic_host_sources_d }}"
+    when:
+      - item.enabled | default (true)
+
+  - name: Remove extra repositories in sources.list.d
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: absent
+      filename: "{{ item.name }}"
+      update_cache: yes
+    with_items: "{{ basic_host_sources_d }}"
+    when:
+      (not item.enabled | default (false,true) )
+
+  - name: Remove extra repositories in Apt signing key
+    apt_key:
+      id: "{{ item.key_id | default(omit) }}"
+      url: "{{ item.key_url }}"
+      state: absent
+    with_items: "{{ basic_host_sources_d }}"
+    when:
+      - (not item.enabled | default (false,true) )
+      - item.key_id is defined
+

@@ -1,0 +1,50 @@
+---
+
+- debug:
+    var: plugin_name
+
+- set_fact:
+    plugin_item: "{{ i }}"
+  with_items: "{{ roundcube_github_plugins }}"
+  loop_control:
+    loop_var: i
+  when:
+    - i is defined
+    - i.name is defined
+    - i.name == plugin_name
+
+
+- name: Github plugin
+  when:
+    - plugin_item.repo_name is defined
+    - plugin_item.name is defined
+    - plugin_item.url is defined
+    - plugin_item.plugin_file is defined
+  block:
+
+  - name: "Download   {{plugin_item.repo_name}}"
+    unarchive:
+      src:            "{{plugin_item.url}}"
+      dest:           "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins"
+      remote_src: True
+      owner:          "{{ item.user }}"
+      group:          "{{ item.group }}"
+      creates:        "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins/{{plugin_item.repo_name}}/{{plugin_item.plugin_file}}"
+
+  - name: "Create {{plugin_item.name}} config file"
+    template:
+      src: "github_plugins/{{plugin_item.config_file}}"
+      dest: "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins/{{plugin_item.repo_name}}/config.inc.php"
+      owner:          "{{ item.user }}"
+      group:          "{{ item.group }}"
+      mode: 0640
+    when:  "plugin_item.config_file is defined "
+
+  - name: Create Symlinc for {{item.name}}
+    file:
+      src: "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins/{{plugin_item.repo_name}}"
+      dest: "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/plugins/{{plugin_item.name}}"
+      state: link
+
+  - include: "github_plugin/{{ plugin_item.include_post_install}}"
+    when:  plugin_item.include_post_install is defined

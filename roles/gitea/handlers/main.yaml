@@ -1,0 +1,6 @@
+- name: Restart Gitea
+  service: name=gitea state=restarted
+  listen: "restart Gitea server"
+
+- name: "Reload systemd"
+  shell: "systemctl daemon-reload"

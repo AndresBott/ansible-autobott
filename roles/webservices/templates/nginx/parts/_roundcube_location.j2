@@ -1,0 +1,36 @@
+    # old system location
+    # root "/var/lib/roundcube";
+    root "{{ webservices_root }}/{{ item.0.name }}/home_dir/roundcube_installs/current/public_html";
+
+    # allow iframe content
+    add_header X-Frame-Options SAMEORIGIN;
+    index index.php index.html index.htm;
+
+    location / {
+        #autoindex on;
+        try_files $uri $uri/ /index.php$uri?$args =404;
+    }
+
+    {% include  'nginix.part.phpfpm.j2' %}
+
+    #restric roundcube access
+
+    location /installer {
+        rewrite ^ https://$http_host permanent;
+        break;
+    }
+
+    location /config {
+        rewrite ^ https://$http_host permanent;
+        break;
+    }
+
+    location /temp {
+        rewrite ^ https://$http_host permanent;
+        break;
+    }
+
+    location /logs {
+        rewrite ^ https://$http_host permanent;
+        break;
+    }

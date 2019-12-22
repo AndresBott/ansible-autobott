@@ -1,0 +1,17 @@
+#============================================================================================================
+# Postgrey
+#============================================================================================================
+
+- name: install required packages
+  apt:
+    name:
+      - postgrey
+    state: present
+    update_cache: yes
+  notify: "restart Postgrey"
+
+- name: configure /etc/default/postgrey
+  template:
+    src: posgrey.j2
+    dest: /etc/default/postgrey
+  notify: "restart Postgrey"

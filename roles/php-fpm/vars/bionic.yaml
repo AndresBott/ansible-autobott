@@ -1,0 +1,10 @@
+php_version: 7.2
+php_modules:
+  - php-fpm
+  - php-xml
+  - php-curl
+  - php-mbstring
+  - php-mysql
+  - php-sqlite3
+  - php-gd
+  - php-bz2

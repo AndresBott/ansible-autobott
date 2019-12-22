@@ -1,0 +1,51 @@
+---
+#============================================================================================================
+# Let's encrypt
+#============================================================================================================
+
+- name: Create nginx based letsencrypt certificate (Staging)
+  shell: >
+        certbot --nginx certonly
+        --staging
+        --email {{ item.1.ssl.letsencrypt_notifications_email }}
+        -d {{ item.1.domain }}
+        {% if item.1.add_fqdn_subdomain is defined and item.1.add_fqdn_subdomain %} -d {{ item.1.domain }}.{{ ansible_fqdn }} {% endif %}
+  when:
+    - item.1.ssl.letsencrypt_notifications_email is defined # run if ssl is defined
+    - item.1.ssl.staging # staging server
+  args:
+    creates: "/etc/letsencrypt/live/{{ item.1.domain }}/fullchain.pem"
+  notify: "reload nginx"
+
+# Production
+- name: Create nginx based letsencrypt certificate
+  shell: >
+        certbot --nginx certonly
+        --email {{ item.1.ssl.letsencrypt_notifications_email }}
+        -d {{ item.1.domain }}
+        {% if item.1.add_fqdn_subdomain is defined and item.1.add_fqdn_subdomain %} -d {{ item.1.domain }}.{{ ansible_fqdn }} {% endif %}
+  when:
+    - item.1.ssl.letsencrypt_notifications_email is defined # run if ssl is defined
+    - not item.1.ssl.staging # Production server
+  args:
+    creates: "/etc/letsencrypt/live/{{ item.1.domain }}/fullchain.pem"
+  notify: "reload nginx"
+
+- name: link letsencrypt certificate
+  file:
+    src: "/etc/letsencrypt/live/{{ item.1.domain }}/fullchain.pem"
+    dest: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.cert.pem"
+    state: link
+
+- name: link letsencrypt private key
+  file:
+    src: "/etc/letsencrypt/live/{{ item.1.domain }}/privkey.pem"
+    dest: "{{ webservices_root }}/{{ item.0.name }}/home_dir/ssl/{{ item.1.domain }}/live/{{ item.1.domain }}.pkey.pem"
+    state: link
+
+#- debug:
+#    var: existent_letsencrypt_certificate
+
+# @todo improvement # Delete ( maybe even revoke) let's encrypt certifiactes if no longer in use
+
+

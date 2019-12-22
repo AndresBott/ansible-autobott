@@ -1,0 +1,6 @@
+# File: parts/redirection.j2
+{% if item.1.redirect is defined and item.1.redirect != False %}
+    return  {% if item.1.redirect_temp is defined and item.1.redirect_temp %}302{% else %}301{% endif %} $scheme://{{ item.1.redirect }}$request_uri;
+{% endif %}
+
+

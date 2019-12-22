@@ -1,0 +1,154 @@
+#---
+#
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Basic reusable role for Debian based hosts,
+# this role will take care of some basic housekeeping.
+#
+# @todo improvement # add automatic system update with cron
+#
+
+- name: print facts
+  tags:
+        - never
+        - facts
+  block:
+  - debug:
+      var: vars
+  - fail:
+      msg: "this is an intended end of playbook to read get the facts"
+
+#============================================================================================================
+# Enroll system
+#============================================================================================================
+# @action enroll # Create a system user "ans" and allow password less sudo to that user.
+# @action enroll # Manage ssh keys for the system user "ans", this are the ones allowed to make changes on the ansible managed systems.
+
+# @tag enroll # run the the initial enrollment actions of the system
+# @tag role_basic_host # only run the role basichost
+# @tag configuration # run configuration tasks
+
+- name: "FIX: Ubuntu 16.04 LTS certain required modules not present"
+  raw: apt-get install python-minimal python-apt aptitude -y
+  become: true
+  changed_when: false
+  when: ansible_distribution == 'Ubuntu'
+  tags:           ['role_basic_host','configuration','untagged','enroll']
+
+- name: Enroll system
+  include_tasks:  enroll_system.yaml
+  tags:           ['role_basic_host','configuration','untagged','enroll']
+
+#============================================================================================================
+# Install apps and upgrade the system
+#============================================================================================================
+# @action Install and upgrade # Configure debian sources.list and sources.list.d
+# @action Install and upgrade # install some set of basic needed apps
+# @action Install and upgrade # upgrade the system
+
+# @tag upgrade # perform a system upgrade
+# @tag action_upgrade # perform a system upgrade, same as upgrade
+
+- include_tasks:  system_sources_list.yaml
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+- name: Installing extra apps
+  apt:
+    name: "{{ basic_host_extra_apps | union (basic_host_installed_apps) | union (basic_host_extra_apps_host) }}"
+    state: present
+    install_recommends: no
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+- include_tasks:  system_upgrade.yaml
+  tags:           ['never','upgrade','action_upgrade']
+
+#============================================================================================================
+# Hostname
+#============================================================================================================
+# @action hostname # change the hostname
+# @action hostname # update /etc/hosts
+- include_tasks:  change_hostname.yaml
+  when:     basic_host_hostname != ""
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+- name: update entries in /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+
+      127.0.1.1       {{ ansible_fqdn }}
+                      {%- if basic_host_hostname is defined and basic_host_hostname !="" %} {{ basic_host_hostname }}
+                          {%- else %} {{ ansible_hostname }} {% endif %}
+
+
+      ########################################
+      {% for host in basic_host_extra_host_entires %}
+      {{ host }}
+      {% endfor %}
+      ########################################
+
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+#============================================================================================================
+# Cron notifications
+#============================================================================================================
+# @action cron # update cron MAILTO
+
+- name: Edit MAILTO for cron entries
+  cron:
+    name:         MAILTO
+    env:          yes
+    value:        "{{ basic_host_cron_notification_mail }}"
+  when:
+    - basic_host_cron_notification_mail is defined
+    - basic_host_cron_notification_mail != ""
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+#============================================================================================================
+# Locales
+#============================================================================================================
+# @action locale # generate and configure the locales of the system
+- include_tasks:  generate_locale.yaml
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+#============================================================================================================
+# SSH
+#============================================================================================================
+# @action: locale # limit password login to users belonging to certain group
+# @action: locale # enable ssh sftp
+
+- include_tasks:  ssh.yaml
+  tags:           ['role_basic_host','configuration',"untagged"]
+
+
+#============================================================================================================
+# Users
+#============================================================================================================
+# @action users # create and delete users
+# @tag users # update user definitions and credentials
+
+- include_tasks:  users.yaml
+  tags:           ['role_basic_host','configuration',"untagged","users"]
+
+#============================================================================================================
+# Samba
+#============================================================================================================
+# @action smb-client # install samba (cifs) client and configure mounting points
+
+- include_tasks:  smb_client.yaml
+  when:           basic_host_smb
+  tags:           ['role_basic_host','configuration',"untagged","samba"]
+
+
+
+#============================================================================================================
+# Clean old
+#============================================================================================================
+
+- include_tasks:  clean.yaml
+  tags:           ['role_basic_host','configuration',"untagged","samba"]
+
+
+
+

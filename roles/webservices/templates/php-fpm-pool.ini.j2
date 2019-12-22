@@ -1,0 +1,56 @@
+; Pool name
+[{{ item.name }}]
+; socket config
+listen = /var/run/$pool-php-fpm.sock
+listen.owner = $pool
+listen.group = {{ webservices_group }}
+listen.mode = 0660
+
+;process management
+user = $pool
+group = $pool
+
+;static | dynamic | ondemand
+; For dynamic management here a generic fomrula
+;Total Max Processes = (Total Ram - (Used Ram + Buffer)) / (Memory per php process)
+pm = {{ item.php.pm | default('static') }}
+pm.max_children = {{ item.php.pm_max_children | default(5) }}
+pm.start_servers = {{ item.php.pm_start_servers | default(5) }}
+pm.min_spare_servers = {{ item.php.pm_min_spare_servers if item.php.pm_min_spare_servers else 1  }}
+pm.max_spare_servers = {{ item.php.pm_min_spare_servers if item.php.pm_min_spare_servers else 1  }}
+pm.max_requests = {{ item.php.pm_max_requests | default(2000) }}
+pm.process_idle_timeout = {{ item.php.pm_process_idle_timeout | default(120) }}
+
+; request
+request_terminate_timeout = 60s
+
+; security
+chdir = /
+
+; loging
+php_admin_flag[display_errors] = off
+php_admin_value[error_reporting] = {% if item.php.error_reporting is defined and item.php.error_reporting != "default" %}{{ item.php.error_reporting}}{% else %} "E_ALL & ~E_DEPRECATED & ~E_STRICT" {% endif %}
+
+php_admin_flag[display_startup_errors] = off
+catch_workers_output = yes
+php_admin_flag[log_errors] = on
+php_admin_value[error_log] = "/var/log/php/$pool.error.log"
+
+
+;php_admin_value[memory_limit] = 64M
+php_admin_value[session.save_path] = "{{ webservices_root }}/{{ item.name }}/home_dir/php_sessions"
+
+; open_basedir
+php_admin_value[open_basedir] = "{{ webservices_root }}/$pool/home_dir/{% if item.php.open_basedir is defined and  item.php.open_basedir != "default" %}:{{item.php.open_basedir | join(':') if 'open_basedir' in item.php else '' }}{%endif%}"
+
+;; Add some env variables
+env[TMPDIR] = "{{ webservices_root }}/{{ item.name }}/home_dir/tmp"
+env[TMP] = "{{ webservices_root }}/{{ item.name }}/home_dir/tmp"
+env[TEMP] = "{{ webservices_root }}/{{ item.name }}/home_dir/tmp"
+
+
+
+
+
+
+

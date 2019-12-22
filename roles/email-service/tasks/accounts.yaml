@@ -1,0 +1,135 @@
+---
+- name: create mailAccountConfigDir
+  file:
+    path: "{{ email_data_dir }}/mailAccountConfigs"
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+
+# =================================================================
+# Email domains
+# =================================================================
+
+- template:
+    src: domains.sql.j2
+    dest: "{{ email_data_dir }}/mailAccountConfigs/domain.{{item.domain}}.sql"
+    owner: root
+    group: root
+    mode: 0700
+  register: email_domains_sql
+  with_items: "{{ email_domains }}"
+
+- name: Update domains in database
+  mysql_db:
+    name: "{{ email_db_name }}"
+    state: import
+    target: "{{ email_data_dir }}/mailAccountConfigs/domain.{{item.item.domain}}.sql"
+  with_items: "{{ email_domains_sql.results }}"
+  when: item.changed
+
+# =================================================================
+# Email Accounts
+# =================================================================
+
+- template:
+    src: accounts.sql.j2
+    dest: "{{ email_data_dir }}/mailAccountConfigs/account.{{ item.email.split('@')[0] | lower }}.{{ item.email.split('@')[1] | lower}}.sql"
+    owner: root
+    group: root
+    mode: 0700
+  register: email_account_sql
+  with_items: "{{ email_accounts }}"
+
+- name: Update mailboxes in database
+  mysql_db:
+    name: "{{ email_db_name }}"
+    state: import
+    target: "{{ email_data_dir }}/mailAccountConfigs/account.{{ item.item.email.split('@')[0] | lower }}.{{ item.item.email.split('@')[1] | lower}}.sql"
+  with_items: "{{ email_account_sql.results }}"
+  when: item.changed
+
+# =================================================================
+# Email Alias
+# =================================================================
+
+- template:
+    src: alias.sql.j2
+    dest: "{{ email_data_dir }}/mailAccountConfigs/alias.{{ item.address }}.sql"
+    owner: root
+    group: root
+    mode: 0700
+  register: email_alias_sql
+  with_items: "{{ email_alias | default([])  }}"
+  when:
+    - email_alias is defined
+
+- name: Update alias in database
+  mysql_db:
+    name: "{{ email_db_name }}"
+    state: import
+    target: "{{ email_data_dir }}/mailAccountConfigs/alias.{{ item.item.address }}.sql"
+  with_items: "{{ email_alias_sql.results }}"
+  when:
+    - email_alias is defined
+    - item.changed
+
+# =================================================================
+# Create mail dirs
+# =================================================================
+
+- name: create Maildir directory I
+  file:
+    path: "{{ email_data_dir }}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/Maildir/"
+    state: directory
+    owner: "{{ email_data_user }}"
+    group: "{{ email_data_group }}"
+    mode: 0750
+  with_items: "{{ email_accounts }}"
+
+# =================================================================
+# Create sieve dir
+# =================================================================
+
+- name: create sieve directory
+  file:
+    path: "{{ email_data_dir }}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/sieve/"
+    state: directory
+    owner: "{{ email_data_user }}"
+    group: "{{ email_data_group }}"
+    mode: 0700
+  with_items: "{{ email_accounts }}"
+
+- name: check if rules.sieve exists
+  stat:
+    path: "{{ email_data_dir }}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/sieve/rules.sieve"
+  register: rules_sieve
+  with_items: "{{ email_accounts }}"
+
+- name: create rules.sieve
+  file:
+    path: "{{ email_data_dir }}/maildirs/{{ item.item.email.split('@')[1] | lower }}/{{ item.item.email.split('@')[0] | lower }}/sieve/rules.sieve"
+    state: touch
+    owner: "{{ email_data_user }}"
+    group: "{{ email_data_group }}"
+    mode: 0740
+  with_items: "{{ rules_sieve.results }}"
+  when: item.stat.exists == False
+
+- name: check if main.sieve is a symlink
+  stat:
+    path:         "{{ email_data_dir }}/maildirs/{{ item.email.split('@')[1] | lower }}/{{ item.email.split('@')[0] | lower }}/sieve/main.sieve"
+  register: sieve_links
+  with_items: "{{ email_accounts }}"
+
+- name: create symlink from rules.sieve to main.sieve
+  file:
+    src: "{{ email_data_dir }}/maildirs/{{ item.item.email.split('@')[1] | lower }}/{{ item.item.email.split('@')[0] | lower }}/sieve/rules.sieve"
+    dest: "{{ email_data_dir }}/maildirs/{{ item.item.email.split('@')[1] | lower }}/{{ item.item.email.split('@')[0] | lower }}/sieve/main.sieve"
+    state: link
+    owner: "{{ email_data_user }}"
+    group: "{{ email_data_group }}"
+    mode: 0700
+  with_items: "{{ sieve_links.results }}"
+  when:
+    - not item.stat.exists or ( item.stat.islnk is defined and not item.stat.islnk)

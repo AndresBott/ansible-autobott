@@ -1,0 +1,9 @@
+#- name: "Reload systemd"
+#  shell: "systemctl daemon-reload"
+
+- name: restart Dovecot
+  service: name=dovecot state=restarted
+
+- name: recompile sieve script
+  command: "sievec {{email_data_dir}}/sieve-after"
+

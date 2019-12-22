@@ -1,0 +1,36 @@
+---
+
+- name: Installing apt-transport-https
+  apt: name=apt-transport-https state=present
+
+- name: Add Parsoid Repo key
+  apt_key:
+    keyserver: keys.gnupg.net
+    id: 90E9F83F22250DD7
+    state: present
+
+- name: add Parsoid Resository
+  apt_repository: repo='deb https://releases.wikimedia.org/debian jessie-mediawiki main' state=present update_cache=yes
+
+- name: make sure needed packages are installed
+  apt:
+    name:
+      - php-curl
+    state: present
+    update_cache: yes
+
+
+- name: Installing Parsoid
+  apt:
+    name: parsoid
+    state: present
+  notify: "Restart Parsoid"
+
+- name: Create Parsoid Config
+  template:
+    src: parsoid.config.yaml.j2
+    dest: /etc/mediawiki/parsoid/config.yaml
+  notify: "Restart Parsoid"
+
+
+

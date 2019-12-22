@@ -1,0 +1,20 @@
+---
+#============================================================================================================
+# Dovecot
+#============================================================================================================
+# @var run_role_dovecot: yes # flag to disable the role
+run_role_dovecot: yes
+# @var dovecot_quota_enabled: yes # enable dovecot quotas
+dovecot_quota_enabled: yes # enable dovecot quotas
+# @var dovecot_virtual_folders: [ 'All Mails', 'Flagged' ] # enable custom virtual folders by providing an array
+# of filters, current values: ['All Mails', 'Flagged']; set to no to disable
+dovecot_virtual_folders: [ 'All Mails', 'Flagged', "Last week" ]
+
+# @var dovecot_mailbox_spam_expurge: 60d # after how many days emails in the spam folder will be deleted
+dovecot_mailbox_spam_autoexpunge: 60d
+
+# @var dovecot_mailbox_autoexpunge: [] # a set of mailboxes with different expunge values (delete after x days)
+dovecot_mailbox_autoexpunge: []
+# @example #
+#  - name: Guardar6meses
+#    days: 180

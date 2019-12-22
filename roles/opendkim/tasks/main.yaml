@@ -1,0 +1,124 @@
+---
+#============================================================================================================
+# Opendkim
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install and configure Opendkim in Ansible-autobott
+#
+# https://www.linode.com/docs/email/postfix/configure-spf-and-dkim-in-postfix-on-debian-8
+# http://unix.stackexchange.com/questions/351584/how-to-configure-the-socket-for-opendkim-on-debian-testing-stretch
+#============================================================================================================
+# @tag role_opendkim # Only run this role
+
+- name: main block
+  tags:
+    - role_opendkim
+    - untagged
+  when:
+    - run_role_opendkim is defined
+    - run_role_opendkim
+  block:
+
+  - name: install required packages
+    apt:
+      name:
+       - opendkim
+       - opendkim-tools
+      state: present
+      update_cache: yes
+
+  - name: opendkim directory present
+    file:
+      path: /etc/opendkim/keys
+      state: directory
+
+  - name: Configure opendkim
+    template:
+      src: opendkim.conf.j2
+      dest: /etc/opendkim.conf
+    notify: restart Opendkim
+
+  - name: opendkim TrustedHosts present
+    template:
+      src: TrustedHosts.j2
+      dest: /etc/opendkim/TrustedHosts
+    notify: restart Opendkim
+
+  - name: Configure opendkim KeyTable
+    template:
+      src: KeyTable.j2
+      dest: /etc/opendkim/KeyTable
+    notify: restart Opendkim
+
+  - name: Configure SigningTable
+    template:
+      src: SigningTable.j2
+      dest: /etc/opendkim/SigningTable
+    notify: restart Opendkim
+
+  - name: ensure signing key is present
+    stat: "path=/etc/opendkim/keys/dkim.{{ item.domain }}.private get_md5=no"
+    with_items: "{{ email_domains }}"
+    register: dkim_key
+
+  - name: generate signing key
+    shell: opendkim-genkey -b {{ opendkim_signature_bits }} -s dkim.{{ item.item.domain }} -d {{ item.item.domain }} -D /etc/opendkim/keys/
+    with_items: "{{dkim_key.results}}"
+    when:  not item.stat.exists
+    notify: restart Opendkim
+
+  - name: ensure signing key owner
+    file:
+      path: /etc/opendkim/keys/dkim.{{ item.item.domain }}.private
+      owner: opendkim
+      group: opendkim
+    with_items: "{{ dkim_key.results }}"
+    when:  not item.stat.exists
+    notify: restart Opendkim
+
+# hack to get link socket into postfix chroot, since we canto change the socket location
+# http://unix.stackexchange.com/questions/351584/how-to-configure-the-socket-for-opendkim-on-debian-testing-stretch
+  - name: "Create folder /var/spool/postfix/opendkim"
+    file:
+      path: "/var/spool/postfix/opendkim"
+      state: directory
+      owner: "opendkim"
+      group: "postfix"
+      mode: 0750
+    notify: "restart postfix and opendkim"
+
+  - name: add user postfix to group opendkim
+    user:
+      name: postfix
+      groups: opendkim
+      append: yes
+    when:
+      - opendkim_socket == "unix"
+
+# @tag role_opendkim_keys # print current public keys
+- name: Print public keys
+  tags:
+    - role_opendkim
+    - role_opendkim_keys
+    - untagged
+  when:
+    - run_role_opendkim is defined
+    - run_role_opendkim
+  block:
+
+  - name: Check that key files exist
+    stat:
+      path: "/etc/opendkim/keys/dkim.{{ item.domain }}.txt"
+    with_items: "{{ email_domains }}"
+    register: key_file_result
+
+  - shell: "cat /etc/opendkim/keys/dkim.{{ item.item.domain }}.txt "
+    register: key_file_data
+    with_items: "{{ key_file_result.results }}"
+    when: item.stat.exists == True
+    changed_when: false
+
+  - name: "[REPORT] dkim public entries"
+    debug:
+      msg: " {{ item.stdout }}"
+    with_items: "{{ key_file_data.results }}"
+

@@ -1,0 +1,21 @@
+    # File: nginix.part.mediawiki_location.j2
+
+    root "{{ webservices_root }}/{{ item.0.name }}/home_dir/public_html/current_mediawiki_version";
+
+    location / {
+        #autoindex on;
+        try_files $uri $uri/ @rewrite;
+    }
+
+    location @rewrite {
+        rewrite ^/(.*)$ /index.php?title=$1&$args;
+    }
+
+    location ^~ /maintenance/ {
+        return 403;
+    }
+
+
+    location ^~ /cache/ {
+        deny all;
+    }

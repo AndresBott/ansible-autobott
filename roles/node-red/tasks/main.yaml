@@ -1,0 +1,99 @@
+---
+#============================================================================================================
+# Node-red
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install Node-red
+#
+#============================================================================================================
+
+# @tag role_nodered # Flag to only run this roles
+- name: main node red block
+  tags:
+    - role_nodered
+    - untagged
+  when: run_role_nodered
+  block:
+
+  - name: System group for node-red
+    group:
+      name: "{{ nodered_group }}"
+      gid: "{{ nodederd_gid | default(omit) }}"
+
+  - name: check if destination dir exists
+    stat:
+      path: "{{ nodered_dir }}"
+    register: nodered_dir_details
+
+  - name: "Create node-red home dir "
+    file:
+      path: "{{ nodered_dir }}"
+      state: directory
+      mode: 0755
+    when: not nodered_dir_details.stat.exists
+
+  - name: Create system user for node-red
+    user:
+      name: "{{ nodered_user }}"
+      uid:  "{{ nodederd_uid | default(omit) }}"
+      group: "{{ nodered_group }}"
+      home:  "{{ nodered_dir }}"
+      system: no
+
+
+  - name: "Create node-red dirs"
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ nodered_user }}"
+      group: "{{ nodered_group }}"
+      mode: 0750
+    with_items:
+      - "{{ nodered_dir }}"
+      - "{{ nodered_dir }}/.node-red"
+
+
+  - name: Install Node Red
+    npm:
+      name: "{{ item }}"
+      path: "{{ nodered_dir }}"
+      state: latest
+    become: yes
+    become_user: "{{ nodered_user }}"
+    register: nodeServiceChanged
+    with_items: "{{ nodered_pacakges }}"
+
+  - name: Create NodeJs Settings
+    template:
+      src: node-red_settings.js.j2
+      dest: "{{ nodered_dir }}/.node-red/settings.js"
+      owner: "{{ nodered_user }}"
+      group: "{{ nodered_group }}"
+      mode: 0644
+    register: nodeServiceChanged
+
+  - name: Create NodeJs systemd Service
+    template:
+      src: nodejs_systemd_service.j2
+      dest: "/etc/systemd/system/nodered.service"
+      owner: "root"
+      group: "root"
+      mode: 0644
+    register: systemdconfigchanged
+
+  - name: disable NodeJs systemd Service, when it changed
+    systemd:
+      name: "{{ nodered_service_name }}"
+      enabled: no
+    when: systemdconfigchanged.changed
+
+  - name: enable NodeJs systemd Service
+    systemd:
+      name: "{{ nodered_service_name }}"
+      enabled: yes
+      masked: no
+
+  - name: Restart Node Service
+    service:
+      name: "{{ nodered_service_name }}"
+      state: restarted
+    when: systemdconfigchanged.changed or nodeServiceChanged.changed

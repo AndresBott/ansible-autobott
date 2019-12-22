@@ -1,0 +1,68 @@
+# {{ ansible_managed }}
+{%  if item.1.template == "proxy" %}
+# Default Template: nginix.site.proxy.j2
+{% elif item.1.template == "default" %}
+# Default Template: nginix.site.default.j2
+{% endif %}
+server {
+
+    {% include  'parts/servername.j2' %}
+    {% include  'parts/port_listen80.j2' %}
+    {% include  'parts/redirection.j2' %}
+    {% include  'parts/logs.j2' %}
+    {% include  'parts/server_options.j2' %}
+{% if item.1.ssl.type is defined and item.1.ssl.type != "force" and ( item.1.redirect is not defined or item.1.redirect == False)%}
+{%  if item.1.template == "proxy" %}
+    location / {
+    {% include  'parts/location_proxy.j2' %}
+    }
+{% elif item.1.template == "default" %}
+    {% include  'parts/documentroot.j2' %}
+    {% include  'parts/index.j2' %}
+    location / {
+    {% include  'parts/location_default.j2' %}
+    }
+    {% include  'parts/phpfpm.j2' %}
+    {% include  'parts/static.j2' %}
+{% endif %}
+    {% include  'parts/auth.j2' %}
+
+{% endif %}
+}
+
+
+{% if item.1.ssl.type is defined %}
+{%      if item.1.ssl.type == "optional" or  item.1.ssl.type == "force"  %}
+
+# Value of ssl.type is: optional or force, we need a second server block
+server {
+
+    {% include  'parts/servername.j2' %}
+    {% include  'parts/port_listen443.j2' %}
+    {% include  'parts/redirection.j2' %}
+    {% include  'parts/logs.j2' %}
+    {% include  'parts/server_options.j2' %}
+{% if item.1.redirect is not defined or item.1.redirect == False %}
+{%  if item.1.template == "proxy" %}
+    location / {
+    {% include  'parts/location_proxy.j2' %}
+    }
+{% elif item.1.template == "default" %}
+    {% include  'parts/documentroot.j2' %}
+    {% include  'parts/index.j2' %}
+
+    location / {
+    {% include  'parts/location_default.j2' %}
+    }
+
+    {% include  'parts/phpfpm.j2' %}
+    {% include  'parts/static.j2' %}
+{% endif %}
+    {% include  'parts/auth.j2' %}
+
+{% endif %}
+}
+{%      endif %}
+{% endif %}
+
+

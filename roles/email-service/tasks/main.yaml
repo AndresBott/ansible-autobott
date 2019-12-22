@@ -1,0 +1,62 @@
+---
+# @tag email_service # Only run this role
+
+- name: main block
+  tags:
+    - email_service
+    - role_dovecot
+    - untagged
+  when:
+    - run_email_services is defined
+    - run_email_services
+  block:
+
+# =================================================================
+# User
+# =================================================================
+  - name: Create the email shared group
+    group:
+      name: "{{ email_data_group }}"
+      gid: "{{ email_data_gid }}"
+
+  - name: Create the email shared user
+    user:
+      name: "{{ email_data_user }}"
+      uid: "{{ email_data_uid }}"
+      group: "{{ email_data_group }}"
+      home: "{{ email_data_dir }}"
+      shell: "/bin/false"
+
+  - name: Create mailbox directory
+    file:
+      path: "{{ email_data_dir }}"
+      state: directory
+      owner: "{{ email_data_user }}"
+      group: "{{ email_data_group }}"
+
+# =================================================================
+# Mysql
+# =================================================================
+# @action # email mysql - create the shared mysql database to be used by dovecot and postfix
+  - import_tasks: mysql.yaml
+# =================================================================
+# TLS certificate
+# =================================================================
+# @action # SSL/TLS - create a certificate for the email server (self signed or let's encrypt)
+
+  - import_tasks: ssl.yaml
+
+# =================================================================
+# Accounts
+# =================================================================
+# @action # setup email accounts (domains, addresses and alias)
+# @tag email_accounts # only update email accounts, if there has been any change
+- import_tasks: accounts.yaml
+  tags:
+    - email_service
+    - email_accounts
+    - role_dovecot
+    - untagged
+  when:
+    - run_email_services is defined
+    - run_email_services

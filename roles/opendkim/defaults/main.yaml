@@ -1,0 +1,15 @@
+---
+#============================================================================================================
+# Opendkim
+#============================================================================================================
+# @var run_role_opendkim: yes # flag to disable the role
+run_role_opendkim: yes
+# @var opendkim_signature_bits: 1024 # encryption length: [1024 / 2048] this depends on your needs
+opendkim_signature_bits: 1024 # 1024 / 2048 this depends on your needs
+# @var opendkim_socket: "unix" # type of socket: "unix" for unix socket | "inet" for http
+opendkim_socket: "unix"
+# @var opendkim_port: 54321 # port used when using inet
+opendkim_port: 54321
+# @var opendkim_socket_location: "/var/spool/postfix/opendkim/opendkim.sock" # location of the socket if type unix, autobott postfix expects this location.
+opendkim_socket_location: "/var/spool/postfix/opendkim/opendkim.sock"
+

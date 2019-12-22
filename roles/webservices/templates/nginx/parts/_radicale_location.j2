@@ -1,0 +1,22 @@
+    # File: nginix.part.gitea_location.j2
+    location / {
+        try_files $uri @radicale;
+    }
+
+    location /.well-known/carddav {
+        try_files $uri @radicale;
+    }
+
+    location /.well-known/caldav {
+        try_files $uri @radicale;
+    }
+
+    location @radicale {
+{% include  'nginix.part.auth.j2' %}
+        proxy_pass http://localhost:5232;
+        proxy_buffering off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }

@@ -1,0 +1,21 @@
+---
+
+- name: Create nginx based letsencrypt certificate
+  shell: >
+        certbot --nginx certonly
+        --email {{ email_postmaster }}
+        -d {{ email_server_domain }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ email_server_domain }}/fullchain.pem"
+
+- name: link letsencrypt certificate
+  file:
+    src: "/etc/letsencrypt/live/{{ email_server_domain }}/fullchain.pem"
+    dest: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.cert.pem"
+    state: link
+
+- name: link letsencrypt private key
+  file:
+    src: "/etc/letsencrypt/live/{{ email_server_domain }}/privkey.pem"
+    dest: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.pkey.pem"
+    state: link

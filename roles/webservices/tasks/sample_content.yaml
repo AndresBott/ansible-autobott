@@ -1,0 +1,41 @@
+---
+#########################################################
+# create sample content
+#########################################################
+
+- name: check if index.html exists
+  stat:
+    path: "{{ webservices_root }}/{{ item.name }}/home_dir/public_html/index.html"
+  register: html_stat_result
+  with_items:   "{{ webservices }}"
+
+- name: "Create sample html content"
+  template:
+    src:          "sample_content_html.j2"
+    dest:         "{{ webservices_root }}/{{ item.item.name }}/home_dir/public_html/index.html"
+  with_items:     "{{ html_stat_result.results }}"
+  when:
+    - item.stat.exists == False
+    - item.item.enabled
+    - item.item.sample_content  is defined
+    - item.item.sample_content == "html"
+
+- name: check if index.php exists
+  stat:
+    path: "{{ webservices_root }}/{{ item.name }}/home_dir/public_html/index.php"
+  register: php_stat_result
+  with_items:   "{{ webservices }}"
+
+- name: "Create sample php content"
+  template:
+    src:          "sample_content_php.j2"
+    dest:         "{{ webservices_root }}/{{ item.item.name }}/home_dir/public_html/index.php"
+  with_items:     "{{ php_stat_result.results }}"
+  when:
+    - item.stat.exists == False
+    - item.item.enabled
+    - item.item.sample_content  is defined
+    - item.item.sample_content == "php"
+
+
+

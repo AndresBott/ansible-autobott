@@ -1,0 +1,255 @@
+---
+- name: make sure needed packages are installed
+  apt:
+    name:
+      - php-mbstring
+      - php-mysql
+      - php-sqlite3
+      - php-gd
+      - imagemagick
+    state: latest
+    update_cache: yes
+
+- name: "Create Mediawiki install Directories "
+  file:
+    path:         "{{ wiki.install_dir }}/mediawiki_installs"
+    state:        directory
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode:         0755
+
+- name:  Unarchive Mediawiki
+  unarchive:
+    src:          "{{ mediawiki_binary }}"
+    dest:         "{{ wiki.install_dir }}/mediawiki_installs"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode:         0750
+    creates:      "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/index.php"
+    remote_src: yes
+  register: new_mediawiki_install
+
+- stat:
+    path: "{{ wiki.public_html }}"
+  register: public_html_link
+
+- name: "Make sure public_html is not present if is folder"
+  file:
+    path:         "{{ wiki.public_html }}"
+    state:        absent
+  when: public_html_link.stat.islnk is defined and not public_html_link.stat.islnk
+
+- name: link to active
+  file:
+    src:          "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}"
+    dest:         "{{ wiki.public_html }}"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode: 0750
+    state: link
+
+- name: install mediawiki using maintenance/install.php
+  command: "php {{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/maintenance/install.php
+    --dbname {{ wiki.db_name }}
+    --dbuser {{ wiki.db_user }}
+    --dbpass {{ wiki.db_pass }}
+    --dbtype mysql
+    --pass {{ wiki.config.admin_pass }}
+    {{ wiki.name }} {{ wiki.config.admin_user }}"
+  args:
+    creates: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/LocalSettings.php"
+
+- name: Upload wiki icon
+  copy:
+    src: files/my_wiki.png
+    dest: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/my_wiki.png"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode: 0750
+
+
+#============================================================================================================
+# Config
+#============================================================================================================
+
+- name: Create Mediawiki config
+  template:
+    src: LocalSettings.php.j2
+    dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/LocalSettings.php"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode: 0750
+
+#- name: "Make sure that webservices domains point to 127.0.0.1 in /etc/hosts "
+#  lineinfile:
+#    dest: /etc/hosts
+#    state: present
+#    line: "127.0.0.1 {{ item.domain }}"
+#  with_items:   "{{ webservice.nginx.servers }}"
+# @todo validation # add a validation to determine if the domain is properly resolved to 127.0.0.1 ( needed for parsoid)
+
+#- name: "[REPORT] wiki api whitelist info"
+#  debug:
+#    msg: "{{ item.domain }} needs to point to  127.0.0.1 in /etc/hosts TODO: add test for that"
+#  with_items:   "{{ webservice.nginx.servers }}"
+
+
+
+
+#============================================================================================================
+# File Upload
+#============================================================================================================
+# @action: install # Configure file upload settings
+
+- stat:
+    path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/images"
+  register: image_links
+
+- name: Delete images dir if it is not a link
+  file:
+    state: absent
+    path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/images/"
+  when: image_links.stat.islnk is not defined or not image_links.stat.islnk
+
+- name: "Create  images dir"
+  file:
+    path:         "{{ wiki.install_dir }}/mediawiki_files/images"
+    state:        directory
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode:         0750
+
+- name: link to Images dir to current install
+  file:
+    src:          "{{ wiki.install_dir }}/mediawiki_files/images"
+    dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/images"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode: 0750
+    state: link
+
+# @todo bug # some file permisions are root:root after download + install,
+#============================================================================================================
+# Visual Editor / Parsoid
+#============================================================================================================
+
+# @action: install # Install media wiki visual editor
+- name: Install Vistual editor
+  block:
+
+  # check for touched version file
+  - stat:
+      path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor/ver{{mediawiki_VE_version}}"
+    register: VE_versions
+
+  - name: Delete VE if versions dont match
+    file:
+      state: absent
+      path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor/"
+    when: VE_versions.stat.exists == False
+
+  - name: "Create Vistual editor install Directories "
+    file:
+      path:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor"
+      state:        directory
+      owner:        "{{ wiki.user }}"
+      group:        "{{ wiki.group }}"
+      mode:         0750
+
+  - file:
+      path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor/ver{{mediawiki_VE_version}}"
+      state:        touch
+      owner:        "root"
+      group:        "root"
+      mode:         0700
+    when: VE_versions.stat.exists == False
+
+  - name: Unarchive Vistual editor
+    unarchive:
+      src:          "{{ mediawiki_VE_binary }}"
+      dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions"
+      owner:        "{{ wiki.user }}"
+      group:        "{{ wiki.group }}"
+      mode:         0750
+      creates: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor/VisualEditor.php"
+      remote_src: yes
+
+
+#============================================================================================================
+# Mobile Frontend
+#============================================================================================================
+
+# @action: install # Install media wiki Mobile frontend
+- name: Install Mobile Frontend
+  when:
+    - wiki.config.enable_mobile_frontend is defined
+    - wiki.config.enable_mobile_frontend
+
+  block:
+  # check for touched version file
+  - stat:
+      path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend/ver{{mediawiki_MFE_version}}"
+    register: MFE_versions
+
+  - name: "Delete VE if versions don't match"
+    file:
+      state: absent
+      path: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend/"
+    when: MFE_versions.stat.exists == False
+
+  - name: "Create Visual editor install Directories "
+    file:
+      path:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend"
+      state:        directory
+      owner:        "{{ wiki.user }}"
+      group:        "{{ wiki.group }}"
+      mode:         0750
+
+  - file:
+      path:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend/ver{{mediawiki_MFE_version}}"
+      state:        touch
+      owner:        "root"
+      group:        "root"
+      mode:         0700
+    when: MFE_versions.stat.exists == False
+
+
+  - name: Unarchive  Mobile Frontend
+    unarchive:
+      src:          "{{ mediawiki_MFE_binary }}"
+      dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions"
+      owner:        "{{ wiki.user }}"
+      group:        "{{ wiki.group }}"
+      mode:         0750
+      creates:      "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend/MobileFrontend.php"
+      remote_src: yes
+
+
+
+#============================================================================================================
+# Custom CSS
+#============================================================================================================
+- name: Create Custom CSS for Vector theme
+  template:
+    src: custom_Vector.css
+    dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/skins/Vector/custom.css"
+    owner:        "{{ wiki.user }}"
+    group:        "{{ wiki.group }}"
+    mode: 0750
+  when:
+    - wiki.config.enable_custom_css is defined
+    - wiki.config.enable_custom_css
+
+#============================================================================================================
+# Database Upgrade
+#============================================================================================================
+
+- name: Run php update
+  shell: "php {{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/maintenance/update.php"
+  become: yes
+  become_user: "{{ wiki.user }}"
+  notify:
+    - Restart Parsoid
+  when:
+    - new_mediawiki_install is defined
+    - new_mediawiki_install.changed

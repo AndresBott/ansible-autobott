@@ -1,0 +1,15 @@
+INSERT INTO `domain`(
+  domain,
+  active
+{% if item.quota is defined and item.quota != ""  %} , quota {% endif %}
+{% if item.description is defined %}, description {% endif %}
+) VALUES (
+  '{{ item.domain}}'
+  {% if item.quota is defined and item.quota != "" %} ,'{{ item.quota}}' {% endif %}
+  {% if item.active is defined and item.active %} ,'1' {% else %} ,'0'{% endif %}
+  {% if item.description is defined %} , '{{ item.description}}' {% endif %}
+) ON DUPLICATE KEY UPDATE
+  {% if item.active is defined and item.active %} active='1' {% else %} active='0' {% endif %}
+  {% if item.quota is defined and item.quota != "" %} ,quota='{{ item.quota}}' {% else %} ,quota='0' {% endif %}
+  {% if item.description is defined %}, description='{{ item.description}}' {% endif %}
+;

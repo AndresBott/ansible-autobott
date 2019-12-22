@@ -1,0 +1,128 @@
+---
+#============================================================================================================
+# Roundcube
+#============================================================================================================
+# @var run_role_roundcube: yes # flag used to disable this role
+run_role_roundcube: yes
+
+# @var roundcube_instances: [] # list of roundcube instances that will be installed
+roundcube_instances: []
+# @example #
+#roundcube_instances:
+#  - name: webmail                                 # used to identify the different roundcube installations
+#    user: roundcube                               # system user to be used
+#    group: roundcube                              # system group to be used
+#    db_name: roundcube                            # database name
+#    db_user: roundcube                            # database user
+#    db_pass: "changeme"                           # database password
+#    install_dir: "{{webservices_root}}/roundcube/home_dir" # root installation dir
+#    public_html: "{{webservices_root}}/roundcube/home_dir/public_html" # public available directory
+#    tmp_dir: "{{webservices_root}}/roundcube/home_dir/tmp"
+#    config:
+#      ignore_certificate_validation: yes           # this is needed for simple self signed certificates, and should no be used in production
+#      mail_server: "mail.localhost"
+#      cypher: "Quaba75eesdahfoh2eizay8i"           # exactly 24 chars
+#      plugins: []                                  # see <installdir>/plugins, these are provided with roundcube
+#      github_plugins: []         # select from predefined plugins to be installed from github, see variable roundcube_github_plugins
+
+
+
+# @var roundcube_current_version: 1.3.3 # roundcube version to install
+roundcube_current_version: 1.3.3
+
+# @var roundcube_sources: # roundcube installation candidates, this can be changed per configuration
+# @example #
+#roundcube_sources:
+#  1.3.3:
+#    url: https://github.com/roundcube/roundcubemail/releases/download/1.3.3/roundcubemail-1.3.3-complete.tar.gz
+#    sum: "05d9856c966c0d93accabf724e7ff2fd493bba1a57c44247ed0a2aacd617c879"
+
+roundcube_sources:
+
+  1.4-rc1:
+    url: https://github.com/roundcube/roundcubemail/releases/download/1.4-rc1/roundcubemail-1.4-rc1-complete.tar.gz
+    sun: "24a6c8ba9dcd4105f578fba1fadef27c878693612b74d8b781f98ac89de3285c"
+
+  1.3.3:
+    url: https://github.com/roundcube/roundcubemail/releases/download/1.3.3/roundcubemail-1.3.3-complete.tar.gz
+    sum: "05d9856c966c0d93accabf724e7ff2fd493bba1a57c44247ed0a2aacd617c879"
+
+  1.2.7:
+    url: https://github.com/roundcube/roundcubemail/releases/download/1.2.7/roundcubemail-1.2.7-complete.tar.gz
+    sum: "6dd7f117d1a9509a382edb9e04e52f26ff7eb19b52aa4bb6646cfb2fadde682d"
+
+# @var roundcube_manual_plugins: <see examples > # list of manual installable plugins, this can be extended per configuration.
+roundcube_github_plugins:
+
+    - name: carddav
+      url: https://github.com/blind-coder/rcmcarddav/releases/download/v3.0.2/carddav-3.0.2.zip
+      repo_name: carddav
+      plugin_file: carddav.php
+      config_file: carddav.config-inc.php.j2
+
+    - name: gravatar
+      url: https://github.com/prodrigestivill/roundcube-gravatar/archive/master.zip
+      repo_name: roundcube-gravatar-master
+      plugin_file: gravatar.php
+      config_file: gravatar.config-inc.php.j2
+
+    - name: authres_status
+      url: https://github.com/pimlie/authres_status/archive/master.zip
+      repo_name: authres_status-master
+      plugin_file: authres_status.php
+      config_file: authres_status.config-inc.php.j2
+
+    - name: automatic_addressbook_ng
+      url: https://github.com/teonsystems/roundcube-plugin-automatic-addressbook-ng/archive/master.zip
+      repo_name: roundcube-plugin-automatic-addressbook-ng-master
+      plugin_file: automatic_addressbook_ng.php
+      config_file: automatic_addressbook_ng.config.php.j2
+
+    - name: persistent_login
+      url: https://github.com/mfreiholz/persistent_login/archive/master.zip
+      repo_name: persistent_login-master
+      plugin_file: persistent_login.php
+      config_file: persistent_login.config-inc.php.j2
+      include_post_install: persistent_login.yaml
+
+    - name: keyboard_shortcuts
+      url: https://github.com/corbosman/keyboard_shortcuts/archive/master.zip
+      repo_name: keyboard_shortcuts-master
+      plugin_file: keyboard_shortcuts.php
+
+
+
+
+# @example #
+#roundcube_github_plugins:
+#    - name: carddav
+#      url: https://github.com/blind-coder/rcmcarddav/releases/download/v3.0.2/carddav-3.0.2.zip
+#      repo_name: carddav
+#      plugin_file: carddav.php
+#      config_file: carddav.config-inc.php.j2
+#
+#    - name: gravatar
+#      url: https://github.com/prodrigestivill/roundcube-gravatar/archive/master.zip
+#      repo_name: roundcube-gravatar-master
+#      plugin_file: gravatar.php
+#      config_file: gravatar.config-inc.php.j2
+#
+#    - name: authres_status
+#      url: https://github.com/pimlie/authres_status/archive/master.zip
+#      repo_name: authres_status-master
+#      plugin_file: authres_status.php
+#      config_file: authres_status.config-inc.php.j2
+#
+#    - name: automatic_addressbook_ng
+#      url: https://github.com/teonsystems/roundcube-plugin-automatic-addressbook-ng/archive/master.zip
+#      repo_name: roundcube-plugin-automatic-addressbook-ng-master
+#      plugin_file: automatic_addressbook_ng.php
+#      config_file: automatic_addressbook_ng.config.php.j2
+#
+#    - name: persistent_login
+#      url: https://github.com/mfreiholz/persistent_login/archive/master.zip
+#      repo_name: persistent_login-master
+#      plugin_file: persistent_login.php
+#      config_file: persistent_login.config-inc.php.j2
+#      include_post_install: persistent_login.yaml
+

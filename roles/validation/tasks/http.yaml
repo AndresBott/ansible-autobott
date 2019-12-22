@@ -1,0 +1,91 @@
+---
+#- debug:
+#    var: item
+
+- debug:
+    msg: "dd  {{ item.http_auth_user | default( omit ) }}"
+  when:
+    - item.from_local_host is defined
+    - item.from_local_host
+
+# skipped items register variable too:
+#https://github.com/ansible/ansible/issues/4297#issuecomment-386962997
+- name: make url request from host
+  delegate_to: localhost
+  uri:
+    url: "{{ item.url }}"
+    method: "{{ item.method | default( 'GET' ) }}"
+    validate_certs: "{{ item.method | default( 'no' ) }}"
+    follow_redirects: no
+    force_basic_auth: "{% if item.http_auth_password is defined %}yes{% else %}no{% endif %}"
+    user:     "{{ item.http_auth_user | default( omit ) }}"
+    password: "{{ item.http_auth_password | default( omit ) }}"
+  register: url_result_local
+  failed_when: false
+  changed_when: false
+  when:
+    - item.from_local_host is defined
+    - item.from_local_host
+
+- name: make url request from client
+  uri:
+    url: "{{ item.url }}"
+    method: "{{ item.method | default( 'GET' ) }}"
+    validate_certs: "{{ item.method | default( 'no' ) }}"
+    follow_redirects: no
+    user:     " {{ item.http_auth_user | default( omit ) }}"
+    password: " {{ item.http_auth_password | default( omit ) }}"
+  register: url_result_remote
+  failed_when: false
+  changed_when: false
+  when: item.from_local_host is not  defined or not item.from_local_host
+
+- set_fact:
+     url_result: "{{ url_result_local }}"
+  when:
+    - item.from_local_host is defined
+    - item.from_local_host
+
+- set_fact:
+     url_result: "{{ url_result_remote }}"
+  when: item.from_local_host is not  defined or not item.from_local_host
+
+#- name: print stat_result
+#  debug:
+#    var:  url_result
+
+#============================================================================================================
+# evaluate results
+#============================================================================================================
+
+- name: "[REPORT] request not successful "
+  debug:
+    msg: "WARN request ot url:'{{item.url}}' was not successful{% if url_result.msg is defined %}, msg: {{ url_result.msg }}{% endif %}"
+  changed_when: true
+  when: url_result.status is not defined or  url_result.status == -1
+
+- name: "[REPORT] Compare return code"
+  debug:
+    msg: "WARN url:'{{item.url}}' return code should be {{ item.condition | selectattr('rc', 'defined') | map(attribute='rc') | list | first }} but is: {{ url_result.status }}"
+  changed_when: true
+  when:
+    - url_result.status is defined
+    - item.condition | selectattr('rc', 'defined') | list | count > 0
+    - url_result.status != item.condition | selectattr('rc', 'defined') | map(attribute='rc') | list | first
+
+- name: "[REPORT] Compare response header"
+  debug:
+    msg: "WARN on '{{item.url}}' header '{{ item.condition | selectattr('header', 'defined') | map(attribute='header') | list | first }}' should be '{{ item.condition | selectattr('header', 'defined') | map(attribute='value') | list | first }}' but is: {{ url_result[item.condition | selectattr('header', 'defined') | map(attribute='header') | list | first ] }}"
+  changed_when: true
+  when:
+    - url_result.status is defined
+    - item.condition | selectattr('header', 'defined') | list | count > 0
+    - url_result[item.condition | selectattr('header', 'defined') | map(attribute='header') | list | first ] is defined
+    - url_result[item.condition | selectattr('header', 'defined') | map(attribute='header') | list | first ] != item.condition | selectattr('header', 'defined') | map(attribute='value') | list | first
+
+
+
+
+
+
+

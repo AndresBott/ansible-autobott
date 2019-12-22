@@ -1,0 +1,16 @@
+---
+#============================================================================================================
+# Roundcube
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: install N amount of roundcube instances
+#
+#============================================================================================================
+# @tag  role_roundcube # Flag to only run this role
+# @todo  update # update roundcube to latest version
+- block:
+  - include_tasks: roundcube.yaml
+    with_items:   "{{ roundcube_instances }}"
+    when: run_role_roundcube
+
+  tags:
+    - role_roundcube

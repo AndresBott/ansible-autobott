@@ -1,0 +1,23 @@
+#============================================================================================================
+# Generate Locale
+#============================================================================================================
+- name: Generate Locale
+  tags:           ['role_basic_host','configuration',"untagged"]
+  block:
+
+  - name: set locale.gen file
+    template:
+      src: locale.gen.j2
+      dest: /etc/locale.gen
+    register: locale_gen_change
+
+  - name: set locale
+    template:
+      src: default.locale.j2
+      dest: /etc/default/locale
+
+  - name: generate locales
+    command: locale-gen
+    when: locale_gen_change.changed == True
+
+

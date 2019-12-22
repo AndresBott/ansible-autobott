@@ -1,0 +1,38 @@
+---
+#============================================================================================================
+# Pybackup
+#============================================================================================================
+# @var run_role_pybackup: yes # flag to run this role
+run_role_pybackup: yes
+# @var run_role_pybackup_remote: yes # flag to run the remote backup feature
+run_role_pybackup_remote: yes
+
+# @var pybackup_jobs: [] # list of backup jobs
+pybackup_jobs: []
+# @example #
+#pybackup_jobs:
+#  - name: gitea          # job name
+#    backup_dir: /vhosts/gitea/home_dir/gitea   # directory that will be backed up
+#    follow_symlinks: yes # follows sym links when running backup
+#    output_dir: /vhosts/gitea/backups # directory the backup files will be put, WARNING use only one exclusive directory per job
+#    tmp_dir: ""          # relative or absolute tmp dir for backup operations, WARN the folder will be deleted on finish
+#    backup_mysql: gitea  # database name to backup
+#    keep_old: 4          # amount of older backups to keep
+#    file_owner: gitea    # change the ownership of the compressed backup file
+#    file_mode: "0700"    # change the mode of the compressed backup file
+#    cron:
+#      enabled: yes
+#      minute: "0"
+#      hour: "3"
+#      day_of_month: "1"
+#      day_of_week: "*"
+#      month: "*"
+#    remote: no           # perform a remote backup of this job when running tag: role_pybackup_remote
+
+# @var  pybackup_remote_tmp: /tmp # tmp location where the files will be copied during remote backup
+pybackup_remote_tmp: /tmp
+# @var pybackup_remote_fetch_type: "ans" # mechanism used to fetch the file from the remote server, "ans" will use ansible module fetch | "scp" wil use ssh scp
+pybackup_remote_fetch_type: "ans"
+# @var pybackup_remote_out: "{{ playbook_dir }}/remote_backup" # local directory where the remote backup will be stored
+# you can pass this variable to the playbook as: --extra-vars "pybackup_remote_out=/home/ans"
+pybackup_remote_out: "{{ playbook_dir }}/remote_backup"

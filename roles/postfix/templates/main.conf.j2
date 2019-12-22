@@ -1,0 +1,145 @@
+# See /usr/share/postfix/main.cf.dist for a commented, more complete version
+
+# Debian specific:  Specifying a file name will cause the first
+# line of that file to be used as the name.  The Debian default
+# is /etc/mailname.
+#myorigin = /etc/mailname
+
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+biff = no
+
+# appending .domain is the MUA's job.
+append_dot_mydomain = no
+
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+
+readme_directory = no
+
+# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
+# fresh installs.
+compatibility_level = 2
+
+#============================================================================================================
+# TLS
+#============================================================================================================
+smtpd_use_tls=yes
+smtpd_tls_cert_file = {{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.cert.pem
+smtpd_tls_key_file = {{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.pkey.pem
+smtpd_tls_session_cache_database = btree:${data_directory}//smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+
+#============================================================================================================
+# HELO/EHLO
+#============================================================================================================
+smtpd_helo_required = yes
+smtpd_helo_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+    reject_non_fqdn_helo_hostname
+    reject_unknown_helo_hostname
+
+
+#============================================================================================================
+# recipient_restrictions
+#============================================================================================================
+
+
+smtpd_recipient_restrictions =  permit_sasl_authenticated,
+                                permit_mynetworks,
+                                reject_unauth_destination,
+                                {% if postfix_postgrey %}check_policy_service inet:127.0.0.1:{{ postfix_postgrey_port }},{% endif %}
+                                reject_rhsbl_helo dbl.spamhaus.org,
+                                reject_rhsbl_reverse_client dbl.spamhaus.org,
+                                reject_rhsbl_sender dbl.spamhaus.org,
+                                reject_rbl_client zen.spamhaus.org
+
+
+#============================================================================================================
+# relay_restrictions
+#============================================================================================================
+#smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated reject_unauth_destination
+
+#============================================================================================================
+# sender_restrictions
+#============================================================================================================
+
+# reject_unknown_reverse_client_hostname  # Reject Email if SMTP Client IP does have va valid reverse name
+# reject_unknown_client_hostname # Reject Email if SMTP Client Hostname doesn’t have valid A Record
+# reject_unknown_sender_domain  # Reject Email If MAIL FROM Domain Has Neither MX Record Nor A Record
+
+smtpd_sender_restrictions =
+   permit_mynetworks
+   permit_sasl_authenticated
+   reject_unknown_reverse_client_hostname
+   reject_unknown_client_hostname
+   reject_unknown_sender_domain
+
+#============================================================================================================
+#
+#============================================================================================================
+
+
+myhostname = {{ email_server_domain }}
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+mydestination =  $myhostname, localhost.$mydomain, localhost
+
+relayhost =
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+mailbox_size_limit = 0
+recipient_delimiter = +
+inet_interfaces = all
+inet_protocols = all
+
+virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf
+virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf
+virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-alias-maps.cf
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+#Restricting delivery to Dovecot to one email at a time
+dovecot_destination_recipient_limit = 1
+
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
+smtpd_tls_security_level = may
+smtpd_tls_auth_only = yes
+
+message_size_limit = {{ postfix_message_size_limit }}
+
+{% set smtpd_milter = [] %}
+{% set non_smtpd_milter = [] %}
+
+{% if ( run_role_opendkim is defined and run_role_opendkim) %}
+    {% if opendkim_socket == "unix"%}
+        {{ smtpd_milter.append('unix:/opendkim/opendkim.sock') }}
+        {{ non_smtpd_milter.append('unix:/opendkim/opendkim.sock') }}
+    {% elif opendkim_socket == "inet" %}
+        {% set opendkim_port = opendkim_port | string %}
+        {{ smtpd_milter.append("inet:"+opendkim_port+"@localhost") }}
+        {{ non_smtpd_milter.append("inet:"+opendkim_port+"@localhost") }}
+    {% endif %}
+{% endif %}
+
+{% if run_role_spamassassin  is defined and run_role_spamassassin %}
+    {{ smtpd_milter.append('unix:/spamass/spamass.sock') }}
+{% endif %}
+
+{% if smtpd_milter| join(' ') != "" %}
+smtpd_milters = {{  smtpd_milter| join(' ') }}
+{% endif %}
+{% if non_smtpd_milter| join(' ') != "" %}
+non_smtpd_milters = {{  non_smtpd_milter| join(' ') }}
+{% endif %}
+
+milter_protocol = 2
+milter_default_action = accept
+
+
+
+
+
+

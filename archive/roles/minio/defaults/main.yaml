@@ -1,0 +1,53 @@
+---
+#============================================================================================================
+# Minio
+#============================================================================================================
+# @var run_role_minio: yes # Flag to disable the role
+run_role_minio: yes
+# @var minio_disable: no # disable and uninstall minio, data will be left
+minio_uninstall: no
+
+minio_user: minio
+# @var minio_uid: no # define a uid for the user
+minio_uid: no
+# @var minio_group: minio # system group
+minio_group: minio
+# @var minio_gid: no # define a gid for the group
+minio_gid: no
+
+# @minio_dir: "/opt/minio" # installation location for minio
+minio_dir: "/opt/minio"
+# @minio_data_dir: "/opt/minio/data" # location for buckets data
+minio_data_dir: "/opt/minio/data"
+# @var minio_bind_ip: "127.0.0.1" # ip address to listen to
+minio_bind_ip: "127.0.0.1"
+# @var minio_port: 9000 # minio port
+minio_port: 9000
+
+# @var minio_install_client: yes # Install the minio client app
+minio_install_client: yes
+
+# @varminio_access_key: admin # Access key of minimum 3 characters in length.
+minio_access_key: admin
+# @varminio_secret_key: admin1234 # Secret key of minimum 8 characters in length.
+minio_secret_key: admin1234
+
+# @var minio_current_version: 2019-03-13 # see minio_sources for available versions or provide your own
+minio_current_version: 2019-03-13
+# @var minio_client_current_version: 2019-03-13 # see minio_client_sources for available versions or provide your own
+minio_client_current_version: 2019-03-13
+
+#https://dl.minio.io/server/minio/release/
+minio_sources:
+
+  2019-03-13:
+    url: https://dl.minio.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2019-03-13T21-59-47Z
+    sha256sum: "d1444ddd0b93f80a520aa965bddaacaa4b8f7496591fa482354d51457734ce7b"
+
+
+minio_client_sources:
+
+  2019-03-13:
+    url: https://dl.minio.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2019-03-13T21-05-06Z
+    sha256sum: "0f62e7b23d1d9c8b19dcea82a8048b2691228b4d91787053d9904b788eadb9b4"
+

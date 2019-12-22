@@ -1,0 +1,7 @@
+#
+#  Roundcube database cleaning: finally removes all records that are
+#  marked as deleted.
+#
+# m h  dom mon dow user     command
+0   5  *   *   *   {{ item.user }} test -x {{ item.install_dir }}/roundcube_installs/public_html/bin/cleandb.sh && {{ item.install_dir }}/roundcube_installs/public_html/bin/cleandb.sh >/dev/null
+

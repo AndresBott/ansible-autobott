@@ -1,0 +1,61 @@
+---
+#============================================================================================================
+# Let's encrypt role
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Ansible role to install the let's encrypt acme client
+#
+#============================================================================================================
+# @tag role_letsencrypt # Flag to only run this role
+# @todo refactor # move all certbot like cron renew to this role and,
+
+- name: Lets encrypt block
+  tags:
+    - role_letsencrypt
+    - untagged
+  when: run_role_letsencrypt
+  block:
+
+  - name: make sure certbot is installed
+    apt:
+      name:
+        - certbot
+        - python-certbot-nginx
+      state: present
+      update_cache: yes
+
+  - name:  "Copy certbot renew cron: cron.d.certbot.j2"
+    template:
+      src:          "cron.d.certbot.j2"
+      dest:         "/etc/cron.d/certbot"
+
+  - name: Remove the systems certbot cron
+    file:
+      path:       "/etc/cron.d/certbot.dpkg-dist"
+      state: absent
+
+  - name: "Create /opt/scripts/"
+    file:
+      path:         "/opt/scripts/"
+      state:        directory
+      owner:        "root"
+      group:        "root"
+      mode:         0700
+
+  - name:  "Copy certbot renew cron hook script"
+    template:
+      src:          "certbot-renew-hook.sh.j2"
+      dest:         "/opt/scripts/certbot-renew-hook.sh"
+      owner:        "root"
+      group:        "root"
+      mode:         0700
+
+  - name: copy letsencrypt_delete.sh utility script
+    copy:
+        src: "letsencrypt_delete.sh"
+        dest: /usr/local/sbin/letsencrypt_delete
+        owner: root
+        group: root
+        mode: 0740
+
+
+

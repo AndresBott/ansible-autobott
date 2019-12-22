@@ -1,0 +1,113 @@
+---
+#============================================================================================================
+# Validation
+#============================================================================================================
+
+# @var run_role_validation: yes # flag to disable the validation role
+run_role_validation: yes
+# @var validation_packages_uninstall_group: [] # list of packages to be uninstalled, define at group level
+validation_packages_uninstall_group: []
+# @var validation_packages_uninstall_host: [] # list of packages to be uninstalled, define at host level
+validation_packages_uninstall_host: []
+
+# @var validation_packages_purge_group: [] # list of packages to be purged, define at group level
+validation_packages_purge_group: []
+# @var validation_packages_purge_host: [] # list of packages to be purged, define at host level
+validation_packages_pureg_host: []
+#============================================================================================================
+# File validations
+#============================================================================================================
+# @var validation_files_group: [] # validate a list of files on different conditions, see example
+validation_files_group: []
+# @example #
+#validation_files_absent_host:
+#  - file: apache2
+#    path: "/etc/apache2/apache2.conf"
+#    condition:
+#    - absent                           # check for file to be absent
+#  - file: nginx
+#    path: "/etc/nginx/nginx.conf"
+#    condition:
+#    - present                          # check for file to be present
+
+
+# @var validation_files_absent_host: [] # same as validation_files_absent_group but at to be defined at host level
+validation_files_host: []
+
+#============================================================================================================
+#  shell validations
+#============================================================================================================
+# @var validation_shell_group: [] # validate a list of shell commands, see example
+validation_shell_group: []
+# @example #
+#validation_shell_group:
+#  - shell: php -v | head -1 | grep -o -P '\d+\.\d' # shell command to execute
+#    condition:
+#    - rc0                            # check for return code == 0
+#    - stdout: "7.0"                  # compare stdout string to value
+
+# @var validation_shell_host: []  # same as validation_shell_group but at to be defined at host level
+validation_shell_host: []
+
+#============================================================================================================
+# hppt validations
+#============================================================================================================
+# @var validation_http_group: [] # validate a list of http requests, see example
+validation_http_group: []
+# @example #
+#validation_http_host:
+#  - url: http://google.com
+#    method: "GET"                    # (optional) set the request method, if omitted GET is used
+#    validate_certs: no               # (optional) set to yes to fail request on invalid ssl certificate
+#    from_local_host: true            # if true, run the http request from the same machine as your ansible,
+#                                       if false, run from the remote machine
+#    http_auth_user: admin            # send http auth user, password is also required
+#    http_auth_password: admin        # send http auth password
+#    condition:
+#    - rc: 200                        # check for return code == 200
+#    - rc: 302                        # check for return code == 302
+#    - header: "mediawiki_api_error"  # check if a header contains a certain value
+#      value: "readapidenied"
+
+# @var validation_http_host: [] #  same as validation_http_group but at to be defined at host level
+validation_http_host: []
+
+#============================================================================================================
+# email server validations
+#============================================================================================================
+validation_email_group: []
+# @todo bug : the server group is hardcored to "server", needs to be iterable
+# @todo improvement : add email ssl server validation like: https://blogging.dragon.org.uk/testing-imap-mailserver/
+# @example #
+#validation_email_group:
+#  - server:                           # Server gro
+#      host: smtp.gmail.com
+#      port: 587
+#      username: username@gmail.com
+#      from: username@gmail.com
+#      password: mysecret
+#  condition:
+#    - send_mail_to: test@example.com
+#  ports:
+#    - port: 993
+#      status: open
+#    - port: 587
+#      status: open
+
+
+validation_email_host: []
+
+
+#============================================================================================================
+# Mysql validations
+#============================================================================================================
+
+
+
+
+
+
+
+
+
+

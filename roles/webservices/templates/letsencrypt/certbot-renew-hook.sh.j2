@@ -1,0 +1,17 @@
+#!/bin/sh
+
+{% if webservices_letsencrypt_renew_email is defined and webservices_letsencrypt_renew_email != False  %}
+
+/usr/sbin/sendmail "{{ webservices_letsencrypt_renew_email }}" <<EOF
+subject:Letsencrypt Certificate renew
+from:{{ webservices_letsencrypt_renew_email }}
+
+Certificates on {{ inventory_hostname }} have been renewed and Nginx reloaded (I hope).
+$domain
+
+
+EOF
+
+exit 0
+{% endif %}
+

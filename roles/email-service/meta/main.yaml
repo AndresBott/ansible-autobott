@@ -1,0 +1,10 @@
+---
+#============================================================================================================
+# Email Service
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Maintain Ansible-autobott email accounts
+#
+#============================================================================================================
+
+dependencies:
+  - role: letsencrypt

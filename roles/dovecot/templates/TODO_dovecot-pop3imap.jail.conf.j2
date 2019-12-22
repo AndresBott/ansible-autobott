@@ -1,0 +1,10 @@
+[dovecot]
+enabled = true
+port = pop3,pop3s,imap,imaps
+filter = dovecot
+#action = iptables-multiport[name=dovecot-pop3imap, port="pop3,imap", protocol=tcp]
+logpath = /var/log/mail.log
+maxretry = 20
+findtime = 1200
+bantime = 1200
+

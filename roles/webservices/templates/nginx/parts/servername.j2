@@ -1,0 +1,16 @@
+# File: parts/servername.j2
+{% if item.1.subdomain_wildcard is defined and item.1.subdomain_wildcard  %}
+    server_name     {{ item.1.domain }}
+    {%- if  item.1.add_fqdn_subdomain is defined and item.1.add_fqdn_subdomain == True and fqdn not in item.1.domain %}
+        *.{{ item.1.domain }} {{ item.1.domain }}.{{ ansible_fqdn }}
+    {%- endif %} ;
+
+{% else %}
+    server_name     {{ item.1.domain }}
+    {%- if  item.1.add_fqdn_subdomain is defined and item.1.add_fqdn_subdomain == True and fqdn not in item.1.domain %}
+        {{ item.1.domain }}.{{ ansible_fqdn }}
+    {%- endif %} ;
+
+{% endif %}
+
+{# add athis j2 comment to persist the empty line#}

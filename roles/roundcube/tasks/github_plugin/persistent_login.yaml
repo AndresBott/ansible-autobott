@@ -1,0 +1,15 @@
+---
+
+- name: check table exists
+  shell: "mysql --database {{ item.db_name}} -e 'show tables;' | grep auth_tokens"
+  register: dbstatus_auth_tokens
+  failed_when: "dbstatus_auth_tokens.rc == 2"
+  check_mode: no
+  changed_when: False
+
+- name: create persisten login tokens database table
+  mysql_db:
+    name: "{{ item.db_name}}"
+    state: import
+    target: "{{ item.install_dir }}/roundcube_installs/roundcubemail-{{ roundcube_current_version }}/manual_plugins/{{plugin_item.repo_name}}/sql/mysql.sql"
+  when: dbstatus_auth_tokens.rc == 1

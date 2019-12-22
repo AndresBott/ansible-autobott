@@ -1,0 +1,63 @@
+---
+#============================================================================================================
+# MONIT
+#============================================================================================================
+# @var run_role_monit: yes # Flag to disable the role
+run_role_monit: yes
+# @var monit_port: 2812 # monit port
+monit_port: 2812
+# @var monit_httpd: no #enable httpd server for monitoring and querying data
+monit_httpd: no
+# @var monit_interval: 120 # services check interval
+monit_interval: 120
+# @var monit_initial_delay: 120 # initial delay of checks in seconds, note web interface will also not be available
+monit_initial_delay: 5
+
+
+# @var monit_alert: {...} # configure email to send notifications
+# @example #
+#  monit_alert:
+#    notify: [] # emails to notify
+#    replyto: "reply@emai.com"
+#    smtp:
+#      url: "" # empty string to disable
+#      port: 587
+#      username: email@mail.com
+#      password: sompassword
+#      tls: yes
+
+monit_alert:
+  notify: [] # emails to notify
+  replyto: "reply@emai.com"
+  smtp:
+    url: "" # empty string to disable
+    port: 587
+    username: email@mail.com
+    password: somepassword
+    tls: yes
+
+
+# @var monit_checks: [] # Configure the different checks monit will perform
+monit_checks: []
+# @example #
+# monit_checks: []
+#  - name: mysql
+#    enabled: yes
+#    type: process
+#    pid: "/var/run/mysqld/mysqld.pid"
+#    regex: "mysql"
+#    start: "/etc/init.d/mysql start"
+#    stop: "/etc/init.d/mysql stop"
+#    restart: "/etc/init.d/mysql restart"
+#    restart_tolerancy: 2
+#    additional_conditions: []
+#    additional_raw: "" #see samples in /etc/monit/conf-available
+#
+#  - name: disk_root
+#    enabled: true
+#    type: disk
+#    path: "/"
+#    additional_conditions:
+#      - "if SPACE usage > 80% then alert"
+#      - "if SPACE usage > 90% then alert"
+

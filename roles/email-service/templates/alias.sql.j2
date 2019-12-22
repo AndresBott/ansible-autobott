@@ -1,0 +1,17 @@
+INSERT INTO `alias`(
+  address,
+  goto,
+  active
+{% if item.description is defined %}, description {% endif %}
+) VALUES (
+  '{{ item.address}}',
+  '{{ item.goto}}'
+  {% if item.active is defined and item.active %} ,'1' {% else %} ,'0'{% endif %}
+) ON DUPLICATE KEY UPDATE
+  goto='{{ item.goto}}'
+  {% if item.active is defined and item.active %} ,active='1' {% else %} ,active='0' {% endif %}
+;
+
+
+
+

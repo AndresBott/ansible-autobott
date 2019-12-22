@@ -1,0 +1,61 @@
+---
+- name: SMB Block
+  tags:           ['role_basic_host','configuration',"untagged","samba"]
+  block:
+
+  - name: Install SMB client
+    apt:
+      name:
+        - samba
+        - cifs-utils
+      state: present
+  - name:
+    debug:
+      #      msg: "{{ item }}"
+      var: item
+    with_items: "{{ basic_host_smb_mounts }}"
+
+  - name: Create needed directory
+    file:
+      path: /etc/autobott/smb_shares
+      state: directory
+      owner: root
+      group: root
+
+  - name: Create mount points
+    file:
+      path: "{{ item.mount }}"
+      state: directory
+      owner: "{{ item.user }}"
+      group: "{{ item.group }}"
+    with_items: "{{ basic_host_smb_mounts }}"
+
+  - name: Create smb password files for each mount
+    template:
+      src: smb_password.j2
+      dest: "/etc/autobott/smb_shares/smb_pass_{{ item.user }}_{{ item.name }}"
+      owner: root
+      group: root
+      mode: '0500'
+    with_items: "{{ basic_host_smb_mounts }}"
+
+  - name: update entries in /etc/fstab
+    blockinfile:
+      path: /etc/fstab
+      block: |
+        ########################################
+        {% for item in basic_host_smb_mounts %}
+        {{ item.host }}	{{ item.mount }}		cifs	user={{ item.user }},uid={{ item.user }},gid={{ item.group }},credentials=/etc/autobott/smb_shares/smb_pass_{{ item.user }}_{{ item.name }},{{ item.mount_options}} 0 0
+        {% endfor %}
+        ########################################
+
+      marker: "# {mark} ANSIBLE MANAGED BLOCK SMB MOUNTS"
+
+
+
+
+#
+#  - name: todo: configuration block in fstab for each share
+#
+#
+#  TODO: add cron script to stop crashplan and unmount if host gets unavailable, start when available

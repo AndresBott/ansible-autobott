@@ -1,0 +1,6 @@
+---
+#============================================================================================================
+# PHP Composer
+#============================================================================================================
+# @var run_role_composer: yes # conditional used to disable this role, set to no to uninstall composer
+run_role_composer: yes

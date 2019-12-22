@@ -1,0 +1,77 @@
+---
+#============================================================================================================
+# Postfix
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Ansible role to install and configure postfix
+#
+#============================================================================================================
+# @tag role_postfix # Flag to run only this role
+
+- name: main block
+  tags:
+    - role_postfix
+    - untagged
+  when:
+    - run_role_postfix is defined
+    - run_role_postfix
+  block:
+
+  - name: purge Exim installation
+    apt:
+      name:
+        - exim4
+        - exim4-base
+        - exim4-config
+        - exim4-daemon-light
+      state: absent
+      purge: yes
+
+  - name: install required packages
+    apt:
+      name:
+        - postfix
+        - postfix-mysql
+        - swaks
+      state: present
+      update_cache: yes
+    notify: "restart Postfix"
+
+  - name: configure /etc/postfix/master.cf
+    template:
+      src: master.conf.j2
+      dest: /etc/postfix/master.cf
+    notify: "restart Postfix"
+
+# @todo verify # check compatibility level of postfix /etc/postfix/main.cf
+# @todo verify # check if letsencrypt certificate domains are correctly defined, k9 mail seems to fail
+# @todo task # create lets encrypt certificate and enable in config /etc/postfix/main.cf
+  - name: configure /etc/postfix/main.cf
+    template:
+      src: main.conf.j2
+      dest: /etc/postfix/main.cf
+    notify: "restart Postfix"
+
+  - name: define Postfix virtual mailbox domain mapping
+    template:
+      src: mysql-virtual-mailbox-domains.cf.j2
+      dest: /etc/postfix/mysql-virtual-mailbox-domains.cf
+      mode: 0640
+    notify: "restart Postfix"
+
+  - name: define Postfix virtual mailbox mapping
+    template:
+      src: mysql-virtual-mailbox-maps.cf.j2
+      dest: /etc/postfix/mysql-virtual-mailbox-maps.cf
+      mode: 0640
+    notify: "restart Postfix"
+
+  - name: define Postfix virtual alias mapping
+    template:
+      src: mysql-virtual-alias-maps.cf.j2
+      dest: /etc/postfix/mysql-virtual-alias-maps.cf
+      mode: 0640
+    notify: "restart Postfix"
+
+  - name: include postgrey
+    include_tasks: postgrey.yaml
+    when: postfix_postgrey

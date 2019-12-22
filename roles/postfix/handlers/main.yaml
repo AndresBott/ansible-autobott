@@ -1,0 +1,7 @@
+- name: restart Postfix
+  service: name=postfix state=restarted
+  listen: "restart postfix and opendkim"
+
+- name: restart Postgrey
+  service: name=postgrey state=restarted
+  listen: "restart postgrey"

@@ -1,0 +1,22 @@
+[Unit]
+Description=Node.js Service for {{ nodered_service_name }}
+
+
+[Service]
+ExecStart=/usr/bin/nodejs {{ nodered_dir }}/node_modules/node-red/red.js
+
+# Required on some systems
+WorkingDirectory={{ nodered_dir }}
+Restart=always
+# Restart service after 10 seconds if node service crashes
+RestartSec=10
+# Output to syslog
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=nodejs-{{ nodered_service_name }}
+User={{ nodered_user }}
+#Group=<alternate group>
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

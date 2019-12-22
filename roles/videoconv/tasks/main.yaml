@@ -1,0 +1,96 @@
+---
+#============================================================================================================
+# Videoconv
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install videoconv and perform some basic configurations
+#
+#============================================================================================================
+
+- name: main Videoconv block
+  tags:
+    - role_videoconv
+    - untagged
+  when:
+    - run_role_videoconv is defined
+    - run_role_videoconv
+  block:
+
+  - name: System group
+    group:
+      name: "{{ videoconv_group }}"
+      gid: "{{ videoconv_gid | default(omit, true) }}"
+
+  - name: Create system user
+    user:
+      name: "{{ videoconv_user }}"
+      uid:  "{{ videoconv_uid | default(omit, true) }}"
+      group: "{{ videoconv_gid | default(omit, true) }}"
+
+  - name: "Create dirs"
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ videoconv_user }}"
+      group: "{{ videoconv_group }}"
+      mode: 0750
+    with_items:
+      - "{{ videoconv_dir }}"
+      - "{{ videoconv_dir }}/binaries"
+
+  - name: Install ffmpeg
+    apt:
+      name:
+        - ffmpeg
+      state: present
+      update_cache: yes
+
+  - name: "Download videoconv binary"
+    get_url:
+      url: "https://github.com/AndresBott/videoconv/releases/download/{{ videoconv_current_version }}/videoconv-linux-amd64"
+      dest: "{{ videoconv_dir }}/binaries/videoconv-{{ videoconv_current_version }}"
+      owner: "{{ videoconv_user }}"
+      group: "{{ videoconv_group }}"
+      mode: 0750
+    notify: "restart videoconv"
+
+  - name: link videoconv
+    file:
+      src: "{{ videoconv_dir }}/binaries/videoconv-{{ videoconv_current_version }}"
+      dest: "{{ videoconv_dir }}/binaries/videoconv-latest"
+      state: link
+    notify: "restart videoconv"
+
+  - name: "Write configurations"
+    template:
+      src: videoconv.config.yaml.j2
+      dest: "{{ videoconv_dir }}/videoconv.config.yaml"
+      owner: "{{ videoconv_user }}"
+      group: "{{ videoconv_group }}"
+      mode: 0750
+    notify:
+      - "Reload systemd"
+      - "restart videoconv"
+
+  - name: "Setup systemd service"
+    template:
+      src: videoconv.service.j2
+      dest: /lib/systemd/system/videoconv.service
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - "Reload systemd"
+      - "restart videoconv"
+
+  - name: "Enable systemd service"
+    systemd:
+      name: videoconv
+      enabled: yes
+      daemon_reload: yes
+    notify:
+      - "Reload systemd"
+      - "restart videoconv"
+
+
+
+

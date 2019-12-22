@@ -1,0 +1,56 @@
+#============================================================================================================
+# Enroll system
+#============================================================================================================
+- name: Enroll system block
+  tags:           ['role_basic_host','configuration','untagged','enroll']
+  block:
+
+  - name: System-user group exists
+    group:
+      name: "{{ basic_host_group }}"
+      gid: "{{ basic_host_gid | default(omit)}}"
+
+  - name: System user exists
+    user:
+      name: "{{ basic_host_user }}"
+      group: "{{ basic_host_group }}"
+      uid: "{{ basic_host_uid | default(omit)}}"
+      home: "{{ basic_host_home }}"
+      system: yes
+
+  - name: SSH keys
+    authorized_key:
+      user: "{{ basic_host_user }}"
+      key: "{{ item }}"
+      path: "{{ basic_host_home  | default('/home/' + basic_host_user ) }}/.ssh/authorized_keys"
+    with_items: "{{ basic_host_ssh_keys }}"
+
+  - name: Revoke SSH keys
+    authorized_key:
+      user: "{{ basic_host_user }}"
+      key: "{{ item }}"
+      state: absent
+      path: "{{ basic_host_home  | default('/home/' + basic_host_user ) }}/.ssh/authorized_keys"
+    with_items: "{{ basic_host_ssh_keys_revoked }}"
+
+  - name: Make sure sudo is installed
+    apt:
+      name: "sudo"
+      state: present
+
+  - name: Allow passwordless sudo
+    template:
+      src: sudoer_ans.j2
+      dest: /etc/sudoers.d/ansible-admin-sudo
+      owner: root
+      group: root
+      mode: 0440
+
+  - name: Create root .bashrc file
+    template:
+      src: rootbashrc.j2
+      dest: "/root/.bashrc"
+      owner: "root"
+      group: "root"
+      mode: "0600"
+    when:         ( basic_host_root_bashrc | default(true,true) )

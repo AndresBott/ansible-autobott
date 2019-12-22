@@ -1,0 +1,26 @@
+---
+#============================================================================================================
+# Radicale
+#============================================================================================================
+# @var run_role_radicale: yes # flag to disable the role
+run_role_radicale: yes
+
+# @var radicale_user: radicale # service user
+radicale_user: radicale
+# @var radicale_uid: no # service uid, set to no to use system automatic
+radicale_uid: no
+# @var radicale_group: radicale # service main group
+radicale_group: radicale
+# @var radicale_gid: no # service main gid, set to no to use system automatic
+radicale_gid: no
+
+
+# @var radicale_install_dir: /opt/radicale # main installation location
+radicale_install_dir: /opt/radicale
+# @var radicale_data_dir: /opt/radicale/data # data location
+radicale_data_dir: /opt/radicale/data
+
+# @var radicale_bound_ip: 127.0.0.1 # service listen ip address
+radicale_bound_ip: 127.0.0.1
+# @var radicale_port: 5232 # service port 
+radicale_port: 5232

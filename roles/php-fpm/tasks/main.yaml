@@ -1,0 +1,93 @@
+---
+#============================================================================================================
+# PHP-FPM
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install php-fom and perform some basic configurations
+#
+#============================================================================================================
+# @action install # Install and configure php-fpm
+# @tag role_php_fpm # run only php-fpm role
+
+- name: Main PHP-FPM block
+  when:
+    - run_role_php_fpm
+  tags:
+    - role_php_fpm
+    - untagged
+  block:
+
+  # debian : stretch
+  # ubuntu: bionic
+  - name: Load package names based on distro relese
+    include_vars: "{{ item }}"
+    with_first_found:
+      - "{{ ansible_distribution_release }}.yaml"
+
+  - name: Install php-fpm
+    apt:
+      name: "{{ php_modules }}"
+      state: latest
+      update_cache: yes
+#      install_recommends: no
+
+  - name: Configure PHP FPM
+    template:
+      src: "php.ini.{{ php_version }}.ini.j2"
+      dest: "/etc/php/{{ php_version }}/fpm/php.ini"
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart php-fpm
+
+# @action install # make sure that logrotate is enabled for /var/log/php/*.log
+# @todo verify # make sure that the php worker logs are being rotated, maybe need to create a group and add the workers to the group
+  - name: Make sure logrotate is installed
+    action: "{{ansible_pkg_mgr}} pkg=logrotate state=present"
+
+  - name: make sure /var/log/php exists
+    file:
+      path: /var/log/php
+      state: directory
+
+  - name: Configuring PHP logrotate
+    template:
+      src:          "logrotate.j2"
+      dest:         "/etc/logrotate.d/php-fpm{{ php_version }}"
+      owner:        root
+      group:        root
+      mode:         "0644"
+
+
+# @action uninstall # uninstall php-fpm if run_role_php_fpm is set to no / false
+- name: uninstall PHP-FPM block
+  when: not run_role_php_fpm
+  tags:           ['role_php_fpm',"untagged"]
+  block:
+
+  # debian : stretch
+  # ubuntu: bionic
+  - name: Load package names based on distro relese
+    include_vars: "{{ item }}"
+    with_first_found:
+      - "{{ ansible_distribution_release }}.yaml"
+
+  - name: Uninstall php-fpm
+    apt:
+      name: "{{ php_modules }}"
+      state: absent
+      purge: yes
+
+  - name: Remove dependencies that are no longer required
+    apt:
+      autoremove: yes
+
+  - name: "Delete /etc/php/"
+    file:
+      path: /etc/php/
+      state: absent
+
+
+
+
+
+

@@ -1,0 +1,9 @@
+---
+- name: Restart Radicale
+  service: name=radicale state=restarted
+  listen: "restart Radicale server"
+
+- name: Stop Radicale
+  service: name=radicale state=stopped
+  listen: "restart Radicale server"
+

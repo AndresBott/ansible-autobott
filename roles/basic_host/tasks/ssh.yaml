@@ -1,0 +1,176 @@
+---
+- name: SSH
+  tags:           ['role_basic_host','configuration',"untagged"]
+  block:
+
+#============================================================================================================
+# SSH security
+#============================================================================================================
+
+  - name: Disable SSH empty password login
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#?PermitEmptyPasswords"
+      line: "PermitEmptyPasswords no"
+    notify: restart sshd
+
+  - name: Disable SSH remote root login
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#?PermitRootLogin"
+      line: "PermitRootLogin no"
+    notify: restart sshd
+
+  - name: enable X11 forwarding
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#?X11Forwarding"
+      line: "X11Forwarding yes"
+    notify: restart sshd
+    when: basic_host_ssh_X11forwarding
+
+  - name: disable X11 forwarding
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#?X11Forwarding"
+      line: "X11Forwarding no"
+    notify: restart sshd
+    when: not basic_host_ssh_X11forwarding
+
+#============================================================================================================
+# Limit password login
+#============================================================================================================
+
+  - name: limit passwd login
+    when: not basic_host_ssh_allow_passwd_login
+    block:
+
+    - name: Disable password login
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication no"
+      notify: restart sshd
+
+    - name: Create group for ssh password login
+      group:
+        name: "{{ basic_host_ssh_allow_passwd_login_group.group_name }}"
+        gid: "{{ basic_host_ssh_allow_passwd_login_group.gid | default(omit) }}"
+      notify: restart sshd
+      when:
+        - basic_host_ssh_allow_passwd_login_group != ""
+
+    - name: Allow password login for group members
+      blockinfile:
+        dest: /etc/ssh/sshd_config
+        content: |
+          Match Group {{ basic_host_ssh_allow_passwd_login_group.group_name }}
+                  PasswordAuthentication yes
+        validate: '/usr/sbin/sshd -t -f %s'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK => Allow password login for group members"
+      notify: restart sshd
+      when:
+        - basic_host_ssh_allow_passwd_login_group != ""
+
+  - name: limit passwd login
+    when: basic_host_ssh_allow_passwd_login
+    block:
+
+    - name: Enable password login
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication yes"
+      notify: restart sshd
+
+    - name: Remove password login for group members
+      blockinfile:
+        dest: /etc/ssh/sshd_config
+        content: |
+              # This has been disabled by configuration:
+              #   basic_host_ssh_allow_passwd_login: yes or basic_host_ssh_allow_passwd_login_group: ""
+              #   Match Group {% if  basic_host_ssh_allow_passwd_login_group.group_name is defined %} {{ basic_host_ssh_allow_passwd_login_group }} {% else %} no group defined {% endif %}
+              #        PasswordAuthentication yes
+        validate: '/usr/sbin/sshd -t -f %s'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK => Allow password login for group members"
+      notify: restart sshd
+
+
+#============================================================================================================
+# Enable SFTP jail
+#============================================================================================================
+
+  - name: SSH FTP
+    when: basic_host_ssh_sftp
+    block:
+
+    - name: Change open ssh sftp command
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        state: present
+        regexp: '^#?[ \t]*?Subsystem(\s*)sftp'
+        line: 'Subsystem sftp internal-sftp'
+        validate: '/usr/sbin/sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Setup sftpd chroot config
+      blockinfile:
+        dest: "/etc/ssh/sshd_config"
+        content: |
+          Match Group {{ item.name }}
+                  ChrootDirectory {{ item.sftp_jail.base_dir }}/%u
+                  PasswordAuthentication yes
+                  ForceCommand internal-sftp -u {{ item.sftp_jail.umask | default("0077") }}
+                  AllowTcpForwarding no
+                  X11Forwarding no
+        validate: '/usr/sbin/sshd -t -f %s'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK => Setup sftpd chroot config for: {{ item.name }} "
+      with_items: "{{ basic_host_groups }}"
+      when:
+        - item.sftp_jail is defined
+        - item.sftp_jail.enabled is defined
+        - item.sftp_jail.enabled
+      notify: restart sshd
+
+    - name: Revert sftpd chroot configs for disabled groups
+      blockinfile:
+        dest: "/etc/ssh/sshd_config"
+        content: |
+          # This SFTP chroot has been disabled by configuration:
+          #   item.sftp_jail.enabled: no or item.sftp_jail undefined
+        validate: '/usr/sbin/sshd -t -f %s'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK => Setup sftpd chroot config for: {{ item.name }} "
+      with_items: "{{ basic_host_groups }}"
+      when:
+        ( not item.sftp_jail is defined )
+        or (  not item.sftp_jail.enabled )
+      notify: restart sshd
+
+  - name: SSH FTP
+    when: not basic_host_ssh_sftp
+    block:
+
+    - name: Revert open ssh sftp command
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        state: present
+        regexp: '^#?[ \t]*?Subsystem(\s*)sftp'
+        line: '# Subsystem sftp internal-sftp'
+        validate: '/usr/sbin/sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Revert ALL sftpd chroot configs
+      blockinfile:
+        dest: "/etc/ssh/sshd_config"
+        content: |
+          # This SFTP chroot has been disabled by configuration:
+          #   basic_host_ssh_sftp: no
+        validate: '/usr/sbin/sshd -t -f %s'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK => Setup sftpd chroot config for: {{ item.name }} "
+      with_items: "{{ basic_host_groups }}"
+      when:
+        - item.sftp_jail is defined
+      notify: restart sshd
+
+
+

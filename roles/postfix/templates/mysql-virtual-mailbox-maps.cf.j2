@@ -1,0 +1,11 @@
+user = {{ email_db_user }}
+password = {{ email_db_pass }}
+hosts = {{ email_db_host }}
+dbname = {{ email_db_name }}
+#query = SELECT 1 FROM domain WHERE domain='%s' AND backupmx = '0' AND active = '1';
+query = SELECT 1 FROM mailbox WHERE username='%s' AND active = '1';
+
+
+
+
+

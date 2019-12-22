@@ -1,0 +1,6 @@
+{% for d in email_domains %}
+*@{{ d.domain }} _dkim.{{  d.domain }}
+{% endfor %}
+
+
+

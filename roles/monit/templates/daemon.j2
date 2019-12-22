@@ -1,0 +1,8 @@
+###############################################################################
+## Global section
+###############################################################################
+##
+## Start Monit in the background (run as a daemon):
+#
+set daemon {{ monit_interval }}            # check services at 2-minute intervals
+   with start delay {{ monit_initial_delay }}    # optional: delay the first check by 4-minutes (by

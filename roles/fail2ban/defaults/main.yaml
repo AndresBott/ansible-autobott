@@ -1,0 +1,14 @@
+---
+#============================================================================================================
+# Fai2ban
+#============================================================================================================
+# @var run_role_fail2ban: yes # # conditional used to disable this role by variable
+run_role_fail2ban: yes
+
+# for now the role does not extend the default configuration
+
+# @var fail2ban_postfix: no # enable postfix fail2ban rules
+fail2ban_postfix: no
+
+# @var fail2ban_nginx_http_auth: no # enable nginx http auth rules
+fail2ban_nginx_http_auth: no

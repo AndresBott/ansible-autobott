@@ -1,0 +1,143 @@
+---
+#============================================================================================================
+# Create User for web services
+#============================================================================================================
+- name: Per-user group creation
+  group:
+    name:         "{{ item.name }}"
+    gid:          "{{ item.uid | default(omit) }}"
+    state:        present
+  with_items:   "{{ webservices }}"
+  when:           item.enabled | default (true)
+
+- name: Webservices user creation
+  user:
+    name:         "{{ item.name }}"
+    group:        "{{ item.name }}"
+    groups:       "{{ item.groups | join(',') if 'groups' in item else '' }}"
+    shell:        "{{ item.user_shell if item.user_shell is defined else '/bin/false' }}"
+    password:     "{% if item.password is defined and item.password != '' and item.password != False %}{{ item.password | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}{% else %}'!'{% endif %}"
+    uid:          "{{ item.uid | default(omit) }}"
+    home:         "{{ webservices_root }}/{{ item.name }}/home_dir"
+    createhome:   "no"
+  with_items:   "{{ webservices }}"
+  when:           item.enabled | default (true)
+
+# @todo verify # check if rather add webserive user to www-data or add www-data to webservice group
+- name: "add the webservice to group: {{ webservices_group }}"
+  user:
+    name:         "{{ webservices_group }}"
+    groups:       "{{ item.name }}"
+    append:       yes
+  with_items:     "{{ webservices }}"
+  when:           item.enabled | default (true)
+
+#============================================================================================================
+# Create Dirs
+#============================================================================================================
+
+- name: "Create webservice root directory "
+  file:
+    path:         "{{ webservices_root }}/{{ item.name }}"
+    state:        directory
+    owner:        root
+    group:        root
+    mode:         0755
+  with_items: "{{ webservices }}"
+  when:           item.enabled | default (true)
+
+# @todo: security bug # remove read all on webservices users
+- name: "Create webservices directories "
+  file:
+    path:         "{{ webservices_root }}/{{ item[0].name }}/home_dir/{{ item[1]}}"
+    state:        directory
+    owner:        "{{ item[0].name }}"
+    group:        "{{ item[0].name }}"
+    mode:         0755
+  with_nested:
+    - "{{ webservices }}"
+    - [
+       ".ssh" ,
+       "tmp" ,
+      ]
+  when:           item[0].enabled | default (true)
+
+- name: "Webservices SSH keys"
+  authorized_key:
+    user:         "{{item.0.name}}"
+    key:          "{{item.1}}"
+    path:         "{{ webservices_root }}/{{ item[0].name }}/home_dir/.ssh/authorized_keys"
+  with_subelements:
+    - "{{ webservices }}"
+    - ssh_key
+    - flags:
+      skip_missing: True
+  when:           item.0.enabled | default (true)
+
+#============================================================================================================
+# Delete users
+#============================================================================================================
+
+- name: Test user
+  shell: "id {{ item.name }}"
+  register: user_exists
+  failed_when: false
+  changed_when: false
+  with_items:   "{{ webservices }}"
+
+#- debug:
+#    var: user_exists
+
+- name: make sure PHP is stopped
+  service:
+    name: "php{{ php_vers }}-fpm"
+    state: stopped
+  with_items:   "{{ user_exists.results }}"
+  when:
+    - php_vers != ""
+    - not item.item.enabled
+    - item.rc == 0
+
+- name: Webservices user Delete
+  user:
+    name:         "{{item.item.name}}"
+    state:        absent
+  with_items:   "{{ user_exists.results }}"
+  notify: "restart web server"
+  when:
+    - not item.item.enabled
+    - item.rc == 0
+
+- name: Per-user group delete
+  group:
+    name:         "{{item.item.name}}"
+    state:        absent
+  with_items:   "{{ user_exists.results }}"
+  notify: "restart web server"
+  when:
+    - not item.item.enabled
+    - item.rc == 0
+
+#- debug:
+#    msg: "Delete {{ item.rc }}"
+#  with_items:   "{{ user_exists.results }}"
+#  when:
+#    - not item.item.enabled
+#    - item.rc == 0
+
+- name: Delete webService root Directories
+  file:
+    path:         "{{ webservices_root }}/{{ item.item.name }}"
+    state:        absent
+  with_items:   "{{ user_exists.results }}"
+  notify: "restart web server"
+  when:
+    - not item.item.enabled
+    - item.rc == 0
+
+
+
+
+
+
+

@@ -1,0 +1,158 @@
+---
+- name: User and Groups
+  tags:           ['role_basic_host','configuration',"untagged","users"]
+  block:
+
+#============================================================================================================
+# Groups
+#============================================================================================================
+  - name: Creating groups
+    group:
+      name: "{{item.name}}"
+      gid: "{{item.gid | default(omit)}}"
+    with_items: "{{ basic_host_groups }}"
+
+  - name: allow passwordless sudo for group sudo
+    template:
+      src: sudo-group-no-password.j2
+      dest: /etc/sudoers.d/sudo-group-no-password
+      owner: root
+      group: root
+      mode: 0440
+
+#============================================================================================================
+# System users
+#============================================================================================================
+
+  - name: System-users groups
+    group:
+      name: "{{item.username}}"
+      gid: "{{item.gid if item.gid is defined else item.uid}}"
+    with_items: "{{ basic_host_system_users }}"
+
+  - name: System-users
+    user:
+      name: "{{item.username}}"
+      group: "{{item.username}}"
+      groups: "{{item.groups | join(',') if 'groups' in item else ''}}"
+      comment: "{{item.name if item.name is defined else ''}}"
+      uid: "{{item.uid}}"
+      createhome: no
+      system: yes
+    with_items: "{{ basic_host_system_users }}"
+
+#============================================================================================================
+# Real users
+#============================================================================================================
+
+  - name: Users groups
+    group:
+      name: "{{item.username}}"
+      gid: "{{item.gid if item.gid is defined else item.uid}}"
+    with_items: "{{ basic_host_users | union( basic_host_users_extra ) }}"
+    when: basic_host_create_group_for_every_user
+
+  - name: Users
+    user:
+      name: "{{item.username}}"
+      group: "{{ item.username if basic_host_create_group_for_every_user else basic_host_users_group }}"
+      groups: "{{item.groups | join(',') if 'groups' in item else ''}}"
+      shell: "{{item.shell if item.shell is defined else basic_host_users_default_shell }}"
+      password: "{{item.password if item.password is defined else '!'}}"
+      comment: "{{item.name if item.name is defined else ''}}"
+      uid: "{{item.uid | default(omit)}}"
+      home: "{{ item.home | default(omit) }}"
+      createhome: "{{ item.create_home if item.create_home is defined else basic_host_users_create_homedirs }}"
+    with_items: "{{ basic_host_users | union( basic_host_users_extra ) }}"
+
+# When the user has a home dir
+  - name: SSH keys
+    authorized_key:
+      user: "{{item.0.username}}"
+      key: "{{item.1}}"
+      path: "{{ item.0.home | default('/home/' + item.0.username) }}/.ssh/authorized_keys"
+    with_subelements:
+      - "{{ basic_host_users | union( basic_host_users_extra ) }}"
+      - ssh_key
+      - flags:
+        skip_missing: True
+#    when: "{{ item.create_home if item.create_home is defined else basic_host_users_create_homedirs }}"
+    when: (item.create_home is defined and item.create_home) or basic_host_users_create_homedirs
+
+  - name: Revoke SSH keys
+    authorized_key:
+      user: "{{item.0.username}}"
+      key: "{{item.1}}"
+      state: absent
+      path: "{{ item.0.home | default('/home/' + item.0.username) }}/.ssh/authorized_keys"
+    with_subelements:
+      - "{{ basic_host_users | union( basic_host_users_extra ) }}"
+      - ssh_key_revoked
+      - flags:
+        skip_missing: True
+#    when: "{{ item.create_home if item.create_home is defined else basic_host_users_create_homedirs }}"
+    when: (item.create_home is defined and item.create_home) or basic_host_users_create_homedirs
+
+# .bashrc fit users
+  - name: Create a .bashrc file for every users
+    template:
+      src: bashrc.j2
+      dest: "{{ item.home | default('/home/' + item.username) }}/.bashrc"
+      owner: "{{ item.username }}"
+      group: "{{ item.username }}"
+      mode: "0600"
+    with_items: "{{ basic_host_users | union( basic_host_users_extra ) }}"
+    when:
+      - item.bashrc | default(true,true)
+      - ( item.create_home is defined or basic_host_users_create_homedirs )
+
+# Not sure where i used this, therefore commenting out for now
+#  - name: Setup user profiles
+#    blockinfile:
+#      block: "{{item.profile}}"
+#      dest: "{{ item.home | default('/home/' + item.username) }}/.profile"
+#      owner: "{{item.username}}"
+#      group: "{{item.username}}"
+#      mode: 0644
+#      create: true
+#    when: users_create_homedirs and item.profile is defined
+#    with_items: "{{basic_host_users}}"
+
+  - name: correct user home permissions
+    file:
+      dest: "{{ item.home | default('/home/' + item.username) }}"
+      owner:  "{{item.username}}"
+      group:  "{{item.username}}"
+      mode: 0750
+    with_items: "{{ basic_host_users | union( basic_host_users_extra ) }}"
+    when:
+      (not item.home_is_sftp_jail is defined) or (not item.home_is_sftp_jail)
+
+  - name: ssh Jail permisions for users
+    file:
+      dest: "{{ item.home | default('/home/' + item.username) }}"
+      owner:  "root"
+      group:  "{{item.username}}"
+      mode: 0755
+    with_items: "{{ basic_host_users | union( basic_host_users_extra ) }}"
+    when:
+      - item.home_is_sftp_jail is defined
+      - item.home_is_sftp_jail
+
+
+#============================================================================================================
+# Delete users
+#============================================================================================================
+
+  - name: Deleted user removal
+    user:
+      name: "{{item.username}}"
+      state: absent
+    with_items: "{{ basic_host_users_deleted }}"
+
+  - name: Deleted Users groups removal
+    group:
+      name: "{{item.username}}"
+      state: absent
+    with_items: "{{ basic_host_users_deleted }}"
+    when: basic_host_create_group_for_every_user

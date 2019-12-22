@@ -1,0 +1,19 @@
+#============================================================================================================
+# change hostname
+#============================================================================================================
+
+- name: Change hostname
+  tags:           ['role_basic_host','configuration',"untagged"]
+  block:
+
+  - name: Set hostname
+    hostname:
+      name:     "{{ basic_host_hostname }}"
+    register: need_reboot
+    when:     basic_host_hostname != ""
+
+  - name: Rreboot the machine to pickup new hostname
+    reboot:
+      reboot_timeout: 3600
+    when:     need_reboot.changed
+

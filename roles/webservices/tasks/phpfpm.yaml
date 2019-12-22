@@ -1,0 +1,52 @@
+---
+- name: Remove defualt php worker
+  file:
+    path: "/etc/php/{{ php_vers }}/fpm/pool.d/www.conf"
+    state: absent
+  notify: "stop php-fpm"
+  when: php_vers != ""
+
+
+#============================================================================================================
+# php Pool config
+#============================================================================================================
+- name: configure php
+  when:
+   - php_vers != ""
+   - item.enabled | default (true)
+   - item.php.enabled | default (false,true)
+  block:
+
+  - name: "Creates webservices Sessions Directories"
+    file:
+      path: "{{ webservices_root }}/{{ item.name }}/home_dir/php_sessions"
+      state:        directory
+      owner:        "{{ item.name }}"
+      group:        "{{ item.name }}"
+      mode:         0750
+    with_items:   "{{ webservices }}"
+
+#  @ todo: improvement # review the php-fpm pool settings for better performance and logging
+  - name: "Create php pool file"
+    template:
+      src:          "php-fpm-pool.ini.j2"
+      dest:         "/etc/php/{{ php_vers }}/fpm/pool.d/{{ item.name }}.conf"
+    with_items:   "{{ webservices }}"
+    notify: "restart web server"
+
+#============================================================================================================
+# php Pool Deactivate
+#============================================================================================================
+
+- name: "Remove php pool file for user {{ item.name }}"
+  file:
+    path:         "/etc/php/{{ php_vers }}/fpm/pool.d/{{ item.name }}.conf"
+    state:        absent
+  with_items:     "{{ webservices }}"
+  notify:         "restart web server"
+  when:
+    (not item.enabled | default (true) ) or
+    (not item.php.enabled | default (false,true))
+
+
+

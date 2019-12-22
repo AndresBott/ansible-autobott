@@ -1,0 +1,33 @@
+---
+#============================================================================================================
+# Minio
+#============================================================================================================
+# @var run_role_fe26: yes # Flag to disable the role
+run_role_fe26: yes
+
+# @var fe26_user: fe26 # define a user
+fe26_user: fe26
+# @var fe26_uid: no # define a uid for the user
+fe26_uid: no
+# @var fe26_group: fe26 # system group
+fe26_group: fe26
+# @var fe26_gid: no # define a gid for the group
+fe26_gid: no
+
+# @fe26_loglevel: "info" # change the loglevel
+fe26_loglevel: "info"
+
+# @fe26_dir: "/opt/fe26" # installation location
+fe26_dir: "/opt/fe26"
+# @fe26_data_dir: "/opt/fe26/data" # location for data to be shared
+fe26_data_dir: "/opt/fe26/data"
+
+# @var fe26_bind_ip: "127.0.0.1" # ip address to listen to
+fe26_bind_ip: "127.0.0.1"
+# @var fe26_port: 7070 # minio port
+fe26_port: 7070
+
+# @var fe26_current_version: 1.0.8 # see the releases https://github.com/AndresBott/Fe26/releases
+fe26_current_version: 1.0.8
+
+

@@ -1,0 +1,6 @@
+user = {{ email_db_user }}
+password = {{ email_db_pass }}
+hosts = {{ email_db_host }}
+dbname = {{ email_db_name }}
+#query = SELECT destination FROM virtual_aliases WHERE source='%s'
+query = SELECT goto FROM alias WHERE address='%s' AND active = '1';

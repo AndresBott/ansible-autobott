@@ -1,0 +1,28 @@
+input_dir: {{  videoconv_input_dir  }}
+output_dir: {{  videoconv_output_dir }}
+tmp_dir: {{ videoconv_tmp_dir }}
+ignore_dir: {{ videoconv_ignore_dir }}
+
+log_level: "info"
+
+# poll_interval: 10
+
+#video_extensions:
+#
+#  - extension: "mp4"
+#    videoSettingName:
+#      - "320_sample"
+#      - "480_sample"
+#
+#  - extension: "wmv"
+#    videoSettingName:
+#      - "480_to_mp4_sample"
+
+video_settings:
+    - name: "720_encoded_sample"
+      cmd: -vf 'scale=-2:min(720\,ih-mod(ih\,2))' -strict -2 -c:v libx264 -crf 23 -preset veryslow  -t 30
+      out_extension: "mp4"
+
+
+
+threads: 2

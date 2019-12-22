@@ -1,0 +1,15 @@
+[Unit]
+Description=Gitea git server
+After=syslog.target
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+User={{ gitea_user }}
+ExecStart=/usr/local/bin/gitea web -c {{ gitea_dir }}/config/gitea.ini
+Restart=on-failure
+WorkingDirectory={{ gitea_data_dir }}
+Environment="GITEA_WORK_DIR={{ gitea_data_dir }}"
+
+[Install]
+WantedBy=multi-user.target

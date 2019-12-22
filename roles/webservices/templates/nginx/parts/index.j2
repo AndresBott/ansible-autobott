@@ -1,0 +1,8 @@
+# File: parts/index.j2
+{% if item.0.php.enabled is defined and item.0.php.enabled %}
+    index index.php index.html index.htm;
+{%  else %}
+    index index.html index.htm;
+{% endif %}
+
+{# add athis j2 comment to persist the empty line#}

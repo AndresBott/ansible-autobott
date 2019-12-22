@@ -1,0 +1,15 @@
+---
+#============================================================================================================
+# Let's encrypt
+#============================================================================================================
+# @var run_role_letsencrypt: yes # flag to disable the role
+run_role_letsencrypt: yes
+
+# @var letsencrypt_renew_hooks: [] # list of hooks to add to cron after a certificate has been renewed
+letsencrypt_renew_hooks: []
+# @example #
+#letsencrypt_renew_hooks:
+# - "nginx -t -q && nginx -s reload"
+
+# @var  letsencrypt_renew_email: "" # provide an email address to send an email notification of certificate renewal
+letsencrypt_renew_email: ""

@@ -1,0 +1,35 @@
+---
+- name: execute shell
+  shell: "{{ item.shell }}"
+  register: shell_result
+  failed_when: false
+  changed_when: false
+
+#- name: print stat_result
+#  debug:
+#    var:  shell_result
+
+# check for return code == 0
+- name: "[REPORT] Return code should be 0"
+  debug:
+    msg: "WARN shell:'{{item.shell}}' return code should be 0 but is: {{ shell_result.rc }}"
+  changed_when: true
+  when:
+    - '"rc0" in item.condition'
+    - shell_result.rc != 0
+
+
+# check for strdout value
+- set_fact:
+    stdout_val : "{{ item.condition | selectattr('stdout', 'defined') | map(attribute='stdout') | list}}"
+  when: item.condition | selectattr('stdout', 'defined') | list | count > 0
+
+- name: "[REPORT] compare stdout"
+  debug:
+    msg: "WARN shell:'{{item.shell}}' should be: {{ stdout_val[0] }} but is: {{ shell_result.stdout }}"
+  changed_when: true
+  when:
+    - item.condition | selectattr('stdout', 'defined') | list | count > 0
+    - stdout_val is defined
+    - stdout_val[0] != shell_result.stdout
+

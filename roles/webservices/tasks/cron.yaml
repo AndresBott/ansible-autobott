@@ -1,0 +1,32 @@
+---
+
+- name: Enable Cron Ations
+  cron:
+    name: "{{ item.1.name}}"
+    minute: "{{ item.1.minute}}"
+    hour: "{{ item.1.hour}}"
+    day: "{{ item.1.day}}"
+    weekday: "{{ item.1.weekday}}"
+    month:  "{{ item.1.month}}"
+    user: "{{ item.1.user }}"
+    job: "{{ item.1.job }}"
+  with_subelements:
+    - "{{ webservices }}"
+    - cron_actions
+    - flags:
+      skip_missing: True
+  when:
+    - item.1.enabled
+
+- name: Disable Cron Ations
+  cron:
+    name: "{{ item.1.name}}"
+    state: absent
+    user: "{{ item.1.user }}"
+  with_subelements:
+    - "{{ webservices }}"
+    - cron_actions
+    - flags:
+      skip_missing: True
+  when:
+    - not item.1.enabled

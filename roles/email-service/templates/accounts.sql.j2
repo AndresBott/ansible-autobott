@@ -1,0 +1,25 @@
+INSERT INTO `mailbox`(
+  username,
+  domain,
+  local_part,
+  password,
+  name,
+{% if item.quota is defined and item.quota != "" %}  quota, {% endif %}
+  active
+) VALUES (
+'{{ item.email }}',
+'{{ item.email.split("@")[1] | lower }}',
+'{{ item.email.split("@")[0] | lower }}',
+'{{ item.password | string | password_hash("sha512", 65534 | random(seed=inventory_hostname) | string) }}',
+'{{ item.name }}'
+{% if item.quota is defined and item.quota != "" %} , '{{ item.quota}}' {% endif %}
+{% if item.active is defined and item.active %} ,'1' {% else %} ,'0'{% endif %}
+) ON DUPLICATE KEY UPDATE
+  password='{{ item.password | string | password_hash("sha512", 65534 | random(seed=inventory_hostname) | string) }}',
+  name='{{ item.name }}'
+  {% if item.quota is defined and item.quota != "" %} , quota='{{ item.quota}}'  {% else %} ,quota='0' {% endif %}
+  {% if item.active is defined and item.active %} ,active='1' {% else %} ,active='0' {% endif %}
+;
+
+
+

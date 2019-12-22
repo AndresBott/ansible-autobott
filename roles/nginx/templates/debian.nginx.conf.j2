@@ -1,0 +1,62 @@
+user {{ nginx_user }};
+worker_processes {{ nginx_worker_processes }};
+pid  /var/run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    use epoll;
+    worker_connections {{ nginx_worker_connections }};
+    multi_accept on;
+}
+
+http {
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    # Hide Nginx version number
+    server_tokens off;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 120;
+
+    gzip on;
+    gzip_disable "msie6";
+    # gzip_vary on;
+    # gzip_proxied any;
+    # gzip_comp_level 6;
+    # gzip_buffers 16 8k;
+    # gzip_http_version 1.1;
+    gzip_min_length 1000;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+
+
+#########################################################
+# Fast CGI timeouts
+#########################################################
+    #fastcgi_buffers 8 16k;
+    #fastcgi_buffer_size 32k;
+    fastcgi_connect_timeout 100;
+    fastcgi_send_timeout 100;
+    fastcgi_read_timeout 120s;
+
+    client_max_body_size {{ nginx_client_max_body_size }};
+    types_hash_max_size 2048;
+
+#   error_page 404 = {{ nginx_default_error_page }}
+
+#########################################################
+# Virtual Host Configs
+#########################################################
+
+    include /etc/nginx/sites-enabled/*.conf;
+    include /etc/nginx/conf.d/*.conf;
+
+
+}
+

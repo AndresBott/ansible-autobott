@@ -1,0 +1,41 @@
+---
+- name: install required packages
+  apt:
+    name:
+      - python-openssl
+    state: present
+    update_cache: yes
+
+- name: Ensure SSL directory exists in
+  file:
+    path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed"
+    state: directory
+
+- name: Generate an OpenSSL private key.
+  openssl_privatekey:
+    path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.pkey.pem"
+
+- name: Generate an OpenSSL CSR.
+  openssl_csr:
+    path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.csr"
+    privatekey_path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.pkey.pem"
+    common_name: "{{ email_server_domain }}"
+
+- name: Generate a Self Signed OpenSSL certificate.
+  openssl_certificate:
+    path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.cert.pem"
+    privatekey_path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.pkey.pem"
+    csr_path: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.csr"
+    provider: selfsigned
+
+- name: link Self Signed certificate
+  file:
+    src: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.cert.pem"
+    dest: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.cert.pem"
+    state: link
+
+- name: link Self Signed private key
+  file:
+    src: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/self_signed/{{ email_server_domain }}.pkey.pem"
+    dest: "{{ email_data_dir }}/ssl/{{ email_server_domain }}/live/{{ email_server_domain }}.pkey.pem"
+    state: link

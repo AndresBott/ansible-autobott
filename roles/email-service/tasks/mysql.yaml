@@ -1,0 +1,45 @@
+---
+- name: Installing required Python mysqldb module for Ansible to manage databases
+  apt:
+    pkg: python-mysqldb
+    state: present
+
+- name: creating mailserver MySQL database
+  mysql_db:
+    name: "{{ email_db_name }}"
+    state: present
+
+- name: check MySQL database schema exists
+  shell: "mysql --database {{ email_db_name }} -e 'show tables;' | grep domain"
+  register: db_mail_status
+  failed_when: "db_mail_status.rc == 2"
+  check_mode: no
+  changed_when: False
+
+- name: copying MySQL database schema to server
+  copy:
+    src: schema.sql
+    dest: /tmp
+  when: db_mail_status.stdout == ""
+
+- name: setting up SQL schema of mailserver database
+  mysql_db:
+    name: "{{ email_db_name }}"
+    state: import
+    target: /tmp/schema.sql
+  when: db_mail_status.stdout == ""
+
+- name: Delete SQL schema of mailserver database
+  file:
+    path: /tmp/schema.sql
+    state: absent
+
+- name: creating MySQL user to read the mailserver database
+  mysql_user:
+    name: "{{ email_db_user }}"
+    password: "{{ email_db_pass }}"
+    priv: "{{ email_db_name }}.*:SELECT,INSERT,UPDATE,DELETE"
+    state: present
+  when:
+    - email_db_pass is defined
+    - email_db_pass != False

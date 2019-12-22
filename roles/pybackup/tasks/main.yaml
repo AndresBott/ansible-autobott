@@ -1,0 +1,137 @@
+---
+#============================================================================================================
+# pybackup
+# @meta author: Andres Bott <contact@andresbott.com>
+# @meta description: Install pybackup from github
+#
+#============================================================================================================
+# @tag role_pybackup # flag to run only this role
+# @action # run cron based backup jobs that include files and mysql databases
+# @todo improvement # improve pybackup and add it to PIP, then install using pip - rename
+
+- name: main block
+  tags:
+    - role_pybackup
+    - untagged
+  when: run_role_pybackup or run_role_pybackup_remote
+  block:
+
+  - name: make sure tar and unzip are installed
+    apt:
+      name:
+        - tar
+        - unzip
+      state: present
+      update_cache: yes
+
+  - name: "Create /opt/pybackup/"
+    file:
+      path: "/opt/pybackup/"
+      state: directory
+      owner: "root"
+      group: "root"
+      mode: 0755
+
+  - name: "Download pybackup"
+    unarchive:
+      src: https://github.com/AndresBott/pybackup/archive/master.zip
+      dest: /opt/pybackup/
+      remote_src: True
+      owner: root
+      group: root
+      mode: 0750
+      creates: "/opt/pybackup/pybackup-master/README.md"
+
+  - name: "create symlink to binary"
+    file:
+      src: /opt/pybackup/pybackup-master/src/pybackup.py
+      dest: /usr/local/sbin/pybackup.py
+      owner: root
+      group: root
+      mode: 0750
+      state: link
+
+# @action: cron backup # setup a cron job for every backup job
+- name: create backup jobs
+  tags:
+    - role_pybackup
+    - untagged
+  when: run_role_pybackup
+  block:
+
+# @todo verification: check if pre-create backup dir is really needed
+
+#  - name: Creates Backups dir
+#    file:
+#      path:         "{{ item.output_dir }}"
+#      state:        directory
+#      owner:        "{{ item.file_owner }}"
+#      group:        "{{ item.file_owner }}"
+#      mode:         "{{ item.file_mode }}"
+#    with_items:   "{{ pybackup_jobs }}"
+
+  - name: Crate /etc/pybackup/backup.d
+    file:
+      path:         /etc/pybackup/backup.d
+      state:        directory
+
+  - name: Create pybackup configuration file
+    template:
+      src:          "pybackupSampleConfig.ini.j2"
+      dest:         "/etc/pybackup/backup.d/{{ item.name}}.conf.ini"
+      owner:        root
+      group:        root
+      mode:         0600
+    with_items:   "{{ pybackup_jobs }}"
+
+  - name: "Enable cron backup for item {{ item.name }}"
+    cron:
+      name:         "backup files and database for {{ item.name }}"
+      minute:       "{{ item.cron.minute        | default ( 0 ) }}"
+      hour:         "{{ item.cron.hour          | default ( 3 )  }}"
+      day:          "{{ item.cron.day_of_month  | default ( 1 ) }}"
+      weekday:      "{{ item.cron.day_of_week   | default ( '*' ) }}"
+      month:        "{{ item.cron.month         | default ( '*' ) }}"
+      job:          "/usr/local/sbin/pybackup.py --backup /etc/pybackup/backup.d/{{ item.name}}.conf.ini"
+    with_items:   "{{ pybackup_jobs }}"
+    when:
+      - item.cron.enabled | default (true)
+
+  - name: "Disable cron backup for item {{ item.name }}"
+    cron:
+      name:         "backup files and database for {{ item.name }}"
+      state:        absent
+    with_items:   "{{ pybackup_jobs }}"
+    when:
+      - not item.cron.enabled | default (true)
+
+# @action # use pybackup to fetch the backup files directly to the host you are running ansible from
+# @tag role_pybackup_remote # Run the remote backup action, this is only executed if the tag is provided.
+
+- name: "check if role is invoked with the tag: role_pybackup_remote"
+  shell: /bin/true
+  register: normal_task
+  changed_when: false
+
+- name: remote backup
+  tags:
+    - role_pybackup_remote
+  when: run_role_pybackup_remote
+  block:
+
+  - name: "Run the backup only with the tag role_pybackup_remote"
+    when: normal_task is not defined
+    tags:
+      - role_pybackup_remote
+    block:
+
+      - include: remote_backup.yaml
+        with_items: "{{ pybackup_jobs }}"
+        when:
+          - item.remote is defined
+          - item.remote
+
+
+
+
+

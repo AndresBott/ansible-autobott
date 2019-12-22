@@ -1,0 +1,8 @@
+# ~/Maildir/virtual/Last week/dovecot-virtual
+INBOX
+*
+mailbox*
+-Spam
+-Trash
+-Trash/*
+   all younger 604800
