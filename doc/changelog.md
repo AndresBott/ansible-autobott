@@ -1,3 +1,7 @@
+2020/01/05 - Release 1.1.7
+* Small corrections
+* Remove Minio as it is not used
+* Removed submodules dependencies, included all roles into main repo
 
 2019/08/12 - Release 1.1.6
 * Small corrections
@@ -9,7 +13,7 @@
 
 2019/04/21 - Release 1.1.4
 * fixed minor issue on dovecot for virtual dirs
-* Added postgrey feauture to postfix
+* Added postgrey feature to postfix
 * fixed minor issue on cron expression for spamassasin 
 * Avoid spam-learn concurrent cron execution on multiple accounts
 

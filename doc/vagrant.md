@@ -1,5 +1,6 @@
 # Vagrant
-THis contains limited information about vagrant relevant for this project, check the vagrant documentation for full details 
+THis contains limited information about vagrant relevant for this project, 
+check the vagrant documentation for full details 
 
 ## About the VMs:
 

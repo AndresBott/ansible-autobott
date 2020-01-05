@@ -9,7 +9,7 @@ User={{ fe26_user }}
 ExecStart={{ fe26_dir }}/binaries/fe26-latest
 Restart=on-failure
 WorkingDirectory={{ fe26_data_dir }}
-Environment="FE26_LOGLEVEL={{ minio_access_key }}"
+Environment="FE26_LOGLEVEL={{ fe26_loglevel }}"
 Environment="FE26_IP={{ fe26_bind_ip }}"
 Environment="FE26_PORT={{ fe26_port }}"
 Environment="FE26_ROOT={{ fe26_data_dir }}"

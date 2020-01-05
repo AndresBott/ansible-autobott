@@ -166,14 +166,12 @@
 
   - name: Unarchive Vistual editor
     unarchive:
-      src:          "{{ mediawiki_VE_binary }}"
+      src:          "VisualEditor-{{ mediawiki_VE_version }}.tar.gz"
       dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions"
       owner:        "{{ wiki.user }}"
       group:        "{{ wiki.group }}"
       mode:         0750
       creates: "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/VisualEditor/VisualEditor.php"
-      remote_src: yes
-
 
 #============================================================================================================
 # Mobile Frontend
@@ -216,14 +214,12 @@
 
   - name: Unarchive  Mobile Frontend
     unarchive:
-      src:          "{{ mediawiki_MFE_binary }}"
+      src:          "MobileFrontend-{{ mediawiki_MFE_version }}.tar.gz"
       dest:         "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions"
       owner:        "{{ wiki.user }}"
       group:        "{{ wiki.group }}"
       mode:         0750
       creates:      "{{ wiki.install_dir }}/mediawiki_installs/mediawiki-{{ mediawiki_version }}/extensions/MobileFrontend/MobileFrontend.php"
-      remote_src: yes
-
 
 
 #============================================================================================================

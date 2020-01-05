@@ -24,9 +24,6 @@ You can see autobott in action on your own using the included vagrant sample.
 git clone https://github.com/AndresBott/ansible-autobott.git
 cd ansible-autobott
 
-# get the submodules
-git submodule update --init --recursive
-
 # start the vagrant vms and perform initial enroll
 cd  ansible-autobott/vagrant
 vagrant up

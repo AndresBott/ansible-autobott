@@ -18,6 +18,7 @@
       home: "{{ basic_host_home }}"
       system: yes
 
+    # @todo improvement : ans ssh keys shoud be exclusively the deffined ones, replace the action with a template that only takes the ones deffined in the var
   - name: SSH keys
     authorized_key:
       user: "{{ basic_host_user }}"

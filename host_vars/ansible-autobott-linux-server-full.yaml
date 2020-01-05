@@ -721,59 +721,6 @@ webservices:
     cron_actions: []
 
 
-  - name: "minio" #=================================================================
-    enabled: yes
-    uid: 1107
-    shell: "/bin/false"
-    ssh_key: []
-    groups: []
-    password: ""
-
-    nginx:
-      enabled: yes
-      servers:
-        - domain: minio.localhost
-          template: proxy_minio
-          # port listen
-          port: 9080
-          port_ssl: 9443
-          default_server: no
-          server_options: # used to add extra options to teh server {... } section
-              - 'ignore_invalid_headers "off"'   # To allow special characters in headers
-              - "client_max_body_size 0"         # unlimited
-              - 'proxy_buffering "off"'          # disable buffering
-          # http proxy settings
-          proxy_port: "{{ minio_port }}"
-          proxy_lines: []
-          # logs
-          log_access: no
-          log_errors: yes
-
-          #authentication
-          authentication: yes
-          authentication_paths:
-            - "/wiki"
-          htpasswd_filename: no
-          htpasswd_file_users:
-            - user: admin
-              pass: admin
-              enabled: yes
-
-          # letsencrypt ssl
-          ssl:
-            type: "no"
-            provider: "selfsigned"
-            letsencrypt_notifications_email: ""
-            staging: yes
-            redirect_type: 301
-
-    php:
-      enabled: no
-    mysql:
-      enabled: no
-
-    cron_actions: []
-
   - name: fe26 #=================================================================
     enabled: yes
     uid: 1108
